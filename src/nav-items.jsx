@@ -1,7 +1,8 @@
-import { Home, Info, Settings, Bot, Mic } from "lucide-react";
+import { Home, Info, Settings, Bot, Mic, Brain } from "lucide-react";
 import Index from "./pages/Index.jsx";
 import KoxyAI from "./pages/KoxyAI";
 import VAD from "./pages/VAD";
+import HuggingFaceDemo from "./pages/HuggingFaceDemo";
 
 /**
  * Central place for defining the navigation items. Used for navigation components and routing.
@@ -36,5 +37,11 @@ export const navItems = [
     to: "/vad",
     icon: <Mic className="h-4 w-4" />,
     page: <VAD />,
+  },
+  {
+    title: "Hugging Face",
+    to: "/huggingface",
+    icon: <Brain className="h-4 w-4" />,
+    page: <HuggingFaceDemo />,
   },
 ];
