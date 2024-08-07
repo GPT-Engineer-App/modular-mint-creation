@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import axios from 'axios';
+import { koxyAPI } from 'koxy-js';
+
+const api = new koxyAPI("YOUR_CLOUDSPACE_TOKEN");
 
 const KoxyAI = () => {
   const [input, setInput] = useState('');
@@ -13,16 +15,11 @@ const KoxyAI = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const result = await axios.post('https://api.koxy.ai/v1/chat/completions', {
-        messages: [{ role: 'user', content: input }],
-        model: 'gpt-3.5-turbo',
-      }, {
-        headers: {
-          'Authorization': 'Bearer YOUR_KOXY_AI_API_KEY',
-          'Content-Type': 'application/json',
-        },
-      });
-      setResponse(result.data.choices[0].message.content);
+      const parameters = {
+        message: input
+      };
+      const result = await api.run("chat", parameters);
+      setResponse(result.response);
     } catch (error) {
       console.error('Error:', error);
       setResponse('An error occurred while processing your request.');

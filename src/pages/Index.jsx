@@ -13,9 +13,10 @@ const Index = () => {
       </header>
       
       <main className="flex-grow container mx-auto p-4">
-        <h2 className="text-xl font-semibold mb-4">Welcome to our Koxy AI-powered app!</h2>
+        <h2 className="text-xl font-semibold mb-4">Welcome to our Koxy API-powered app!</h2>
         <div className="space-y-4">
-          <p>This app now integrates with Koxy AI to provide intelligent responses.</p>
+          <p>This app now integrates with the Koxy API to provide intelligent responses and run custom flows.</p>
+          <p>We're using the koxy-js library to interact with the Koxy API seamlessly.</p>
           <Link to="/koxy-ai">
             <Button>Try Koxy AI Chat</Button>
           </Link>
