@@ -1,6 +1,6 @@
 import { Home, Info, Settings, Bot, Mic, Brain, Video } from "lucide-react";
 import Index from "./pages/Index.jsx";
-import KoxyAI from "./pages/KoxyAI";
+import EngineLabs from "./pages/EngineLabs";
 import VAD from "./pages/VAD";
 import HuggingFaceDemo from "./pages/HuggingFaceDemo";
 import ObjectDetection from "./pages/ObjectDetection";
@@ -28,10 +28,10 @@ export const navItems = [
     page: <div>Settings Page</div>,
   },
   {
-    title: "Koxy AI",
-    to: "/koxy-ai",
+    title: "Engine Labs AI",
+    to: "/engine-labs",
     icon: <Bot className="h-4 w-4" />,
-    page: <KoxyAI />,
+    page: <EngineLabs />,
   },
   {
     title: "VAD",
