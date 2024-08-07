@@ -8,12 +8,15 @@ const api = axios.create({
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authState, setAuthState] = useState({
+    isAuthenticated: false,
+    token: null,
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (token) {
-      setIsAuthenticated(true);
+      setAuthState({ isAuthenticated: true, token });
     }
   }, []);
 
@@ -22,7 +25,7 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/login', { username, password });
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token);
-        setIsAuthenticated(true);
+        setAuthState({ isAuthenticated: true, token: response.data.token });
       } else {
         throw new Error('Login failed');
       }
@@ -34,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('authToken');
-    setIsAuthenticated(false);
+    setAuthState({ isAuthenticated: false, token: null });
   };
 
   return (
@@ -46,8 +49,9 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === null) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    console.warn('useAuth must be used within an AuthProvider');
+    return { isAuthenticated: false, login: () => {}, logout: () => {} };
   }
   return context;
 };

@@ -19,9 +19,9 @@ import HuggingFaceDemo from "./pages/HuggingFaceDemo";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
+  <AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
         <TooltipProvider>
           <Toaster />
           <BrowserRouter>
