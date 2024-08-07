@@ -6,7 +6,7 @@ import { koxyAPI } from 'koxy-js';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const api = new koxyAPI("m1OlWDWBaw2r5FQrmWvWEdSW_S6unteHK4dS8RQk5VU.GW6sdI6y7UoVI9sOO6OVUuHlBjR77J5Zm17aWmHDBhw");
+const api = new koxyAPI("m1OlWDWBaw2r5FQrmWvWEdSW_S6unteHK4dS8RQk5VU.GW6sdI6y7UoVI9sOO6OVUuHlBjR77J5Zm17aWmHDBhw", "XCQCQtKOf8kU40mmAaKt1KUkiDObCADqLiUdkgr_-XA.dqqcfN_G2tYAVSvsetdwYinj0ayHsdpf21KMA1BtHc0");
 
 const KoxyAI = () => {
   const [input, setInput] = useState('');
@@ -39,7 +39,7 @@ const KoxyAI = () => {
   useEffect(() => {
     let unsubscribe;
     if (api.realtime && typeof api.realtime.subscribe === 'function') {
-      unsubscribe = api.realtime.subscribe('XCQCQtKOf8/events', (event) => {
+      unsubscribe = api.realtime.subscribe('events', (event) => {
         setEvents((prevEvents) => [...prevEvents, event]);
       });
     } else {
