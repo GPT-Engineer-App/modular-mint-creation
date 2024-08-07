@@ -17,6 +17,7 @@ const Index = () => {
         <div className="space-y-4">
           <p>This app now integrates with the Koxy API to provide intelligent responses and run custom flows.</p>
           <p>We're using the koxy-js library to interact with the Koxy API seamlessly.</p>
+          <p>The API key is already configured, so you can start using the Koxy AI chat right away!</p>
           <Link to="/koxy-ai">
             <Button>Try Koxy AI Chat</Button>
           </Link>

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { koxyAPI } from 'koxy-js';
 
-const api = new koxyAPI("YOUR_CLOUDSPACE_TOKEN");
+const api = new koxyAPI("m1OlWDWBaw2r5FQrmWvWEdSW_S6unteHK4dS8RQk5VU.GW6sdI6y7UoVI9sOO6OVUuHlBjR77J5Zm17aWmHDBhw");
 
 const KoxyAI = () => {
   const [input, setInput] = useState('');
