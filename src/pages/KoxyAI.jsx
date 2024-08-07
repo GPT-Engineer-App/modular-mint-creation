@@ -15,7 +15,7 @@ const api = axios.create({
   }
 });
 
-const EngineLabs = () => {
+const KoxyAI = () => {
   const [chatInput, setChatInput] = useState('');
   const [chatResponse, setChatResponse] = useState('');
   const [documentInput, setDocumentInput] = useState('');
@@ -158,4 +158,4 @@ const EngineLabs = () => {
   );
 };
 
-export default EngineLabs;
+export default KoxyAI;

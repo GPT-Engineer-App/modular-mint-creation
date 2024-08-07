@@ -12,7 +12,7 @@ import Settings from "./pages/Settings";
 import ObjectDetection from "./pages/ObjectDetection";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
-import EngineLabs from "./pages/EngineLabs";
+import EngineLabs from "./pages/KoxyAI";
 import VAD from "./pages/VAD";
 import HuggingFaceDemo from "./pages/HuggingFaceDemo";
 
