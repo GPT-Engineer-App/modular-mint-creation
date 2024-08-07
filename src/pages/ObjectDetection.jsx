@@ -8,8 +8,10 @@ const ObjectDetection = () => {
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
   const [predictions, setPredictions] = useState([]);
   const [detectionInterval, setDetectionInterval] = useState();
+  const [objectCounts, setObjectCounts] = useState({});
   const videoRef = useRef(null);
   const modelRef = useRef(null);
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     const loadModel = async () => {
@@ -72,19 +74,38 @@ const ObjectDetection = () => {
   };
 
   const predictObject = async () => {
-    if (!modelRef.current || !videoRef.current) return;
+    if (!modelRef.current || !videoRef.current || !canvasRef.current) return;
 
     try {
       const predictions = await modelRef.current.detect(videoRef.current);
       setPredictions(predictions);
+
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.drawImage(videoRef.current, 0, 0, ctx.canvas.width, ctx.canvas.height);
+
+      const counts = {};
+      predictions.forEach(prediction => {
+        ctx.strokeStyle = '#00FFFF';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(...prediction.bbox);
+
+        ctx.fillStyle = '#00FFFF';
+        ctx.font = '18px Arial';
+        ctx.fillText(`${prediction.class} - ${Math.round(prediction.score * 100)}%`, prediction.bbox[0], prediction.bbox[1] > 10 ? prediction.bbox[1] - 5 : 10);
+
+        counts[prediction.class] = (counts[prediction.class] || 0) + 1;
+      });
+
+      setObjectCounts(counts);
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
   };
 
-return (
+  return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Real-time Object Detection</h1>
+      <h1 className="text-2xl font-bold mb-4">Real-time Object Detection and Counting</h1>
       <Card className="mb-4">
         <CardHeader>
           <CardTitle>Video Feed</CardTitle>
@@ -94,33 +115,17 @@ return (
             <div className="relative">
               <video
                 ref={videoRef}
-                className="w-full max-w-2xl"
+                className="hidden"
                 autoPlay
                 muted
+                playsInline
               />
-              {predictions.map((prediction, index) => (
-                <React.Fragment key={index}>
-                  <p
-                    className="absolute bg-orange-500 bg-opacity-85 text-white border border-dashed border-white z-10 text-xs m-0 p-1"
-                    style={{
-                      left: `${prediction.bbox[0]}px`,
-                      top: `${prediction.bbox[1]}px`,
-                      width: `${prediction.bbox[2] - 100}px`
-                    }}
-                  >
-                    {`${prediction.class} - ${Math.round(prediction.score * 100)}% confidence`}
-                  </p>
-                  <div
-                    className="absolute bg-green-500 bg-opacity-25 border border-dashed border-white z-0"
-                    style={{
-                      left: `${prediction.bbox[0]}px`,
-                      top: `${prediction.bbox[1]}px`,
-                      width: `${prediction.bbox[2]}px`,
-                      height: `${prediction.bbox[3]}px`
-                    }}
-                  />
-                </React.Fragment>
-              ))}
+              <canvas
+                ref={canvasRef}
+                className="w-full max-w-2xl"
+                width={640}
+                height={480}
+              />
             </div>
             <div className="flex space-x-4">
               <Button onClick={isWebcamStarted ? stopWebcam : startWebcam}>
@@ -130,22 +135,20 @@ return (
           </div>
         </CardContent>
       </Card>
-      {predictions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Predictions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul>
-              {predictions.map((prediction, index) => (
-                <li key={index}>
-                  {`${prediction.class} (${(prediction.score * 100).toFixed(2)}%)`}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Object Counts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul>
+            {Object.entries(objectCounts).map(([objectClass, count]) => (
+              <li key={objectClass}>
+                {`${objectClass}: ${count}`}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 };
