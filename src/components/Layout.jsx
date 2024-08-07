@@ -1,41 +1,67 @@
 import { useState } from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./mode-toggle";
-import { Home, BarChart2, Settings, LogOut, Video } from "lucide-react";
+import { Home, BarChart2, Settings, LogOut, Video, Bot, Mic, Brain } from "lucide-react";
+import { useAuth } from '../hooks/useAuth';
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="flex h-screen bg-background">
       <aside className={`bg-secondary text-secondary-foreground w-64 flex-shrink-0 ${isSidebarOpen ? '' : 'hidden'} md:block`}>
         <div className="p-4">
-          <h1 className="text-2xl font-bold mb-4">Recycling Dashboard</h1>
+          <h1 className="text-2xl font-bold mb-4">AI Dashboard</h1>
           <nav>
             <ul className="space-y-2">
               <li>
                 <Link to="/" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
                   <Home className="h-5 w-5" />
+                  <span>Home</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/dashboard" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
+                  <BarChart2 className="h-5 w-5" />
                   <span>Dashboard</span>
                 </Link>
               </li>
               <li>
-                <Link to="/statistics" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
-                  <BarChart2 className="h-5 w-5" />
-                  <span>Statistics</span>
+                <Link to="/koxy-ai" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
+                  <Bot className="h-5 w-5" />
+                  <span>Koxy AI</span>
                 </Link>
               </li>
               <li>
-                <Link to="/settings" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
-                  <Settings className="h-5 w-5" />
-                  <span>Settings</span>
+                <Link to="/vad" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
+                  <Mic className="h-5 w-5" />
+                  <span>VAD</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/huggingface" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
+                  <Brain className="h-5 w-5" />
+                  <span>Hugging Face</span>
                 </Link>
               </li>
               <li>
                 <Link to="/object-detection" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
                   <Video className="h-5 w-5" />
                   <span>Object Detection</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/settings" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
+                  <Settings className="h-5 w-5" />
+                  <span>Settings</span>
                 </Link>
               </li>
             </ul>
@@ -51,7 +77,7 @@ const Layout = () => {
           </Button>
           <div className="flex items-center space-x-4">
             <ModeToggle />
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
