@@ -103,9 +103,12 @@ const ObjectDetection = () => {
 
     setObjectCounts(counts);
     requestAnimationFrame(detectFrame);
-  };
+  } catch (error) {
+    console.error('Error in detectFrame:', error);
+  }
+};
 
-  return (
+return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Real-time Object Detection</h1>
       <Card className="mb-4">
