@@ -7,13 +7,19 @@ import { useAuth } from '../hooks/useAuth';
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className="flex h-screen bg-background">

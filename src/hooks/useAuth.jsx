@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ ...authState, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -50,8 +50,7 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    console.warn('useAuth must be used within an AuthProvider');
-    return { isAuthenticated: false, login: () => {}, logout: () => {} };
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

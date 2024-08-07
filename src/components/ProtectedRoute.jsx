@@ -4,6 +4,11 @@ import { useAuth } from '../hooks/useAuth.jsx';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
 
+  if (isAuthenticated === undefined) {
+    // Authentication state is still loading
+    return null;
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
