@@ -1,4 +1,4 @@
-import { Home, Info, Settings } from "lucide-react";
+import { Home, Info, Settings, Bot } from "lucide-react";
 import Index from "./pages/Index.jsx";
 
 /**
@@ -23,4 +23,12 @@ export const navItems = [
     icon: <Settings className="h-4 w-4" />,
     page: <div>Settings Page</div>,
   },
+  {
+    title: "Koxy AI",
+    to: "/koxy-ai",
+    icon: <Bot className="h-4 w-4" />,
+    page: <KoxyAI />,
+  },
 ];
+
+import KoxyAI from "./pages/KoxyAI";
