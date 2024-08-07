@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import { toPng } from 'html-to-image';
 
 const ObjectDetection = () => {
   const [isDetecting, setIsDetecting] = useState(false);
@@ -53,15 +54,36 @@ const ObjectDetection = () => {
     }
     setIsDetecting(false);
     setObjectCounts({});
+    captureCanvas();
+  };
+
+  const captureCanvas = () => {
+    if (canvasRef.current) {
+      toPng(canvasRef.current)
+        .then((dataUrl) => {
+          const link = document.createElement('a');
+          link.download = 'object-detection.png';
+          link.href = dataUrl;
+          link.click();
+        })
+        .catch((error) => {
+          console.error('Error capturing canvas:', error);
+        });
+    }
   };
 
   const detectFrame = async () => {
     if (!isDetecting || !modelRef.current || !videoRef.current || !canvasRef.current) return;
 
-    const predictions = await modelRef.current.detect(videoRef.current);
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.drawImage(videoRef.current, 0, 0, ctx.canvas.width, ctx.canvas.height);
+    try {
+      const predictions = await modelRef.current.detect(videoRef.current);
+      const ctx = canvasRef.current.getContext('2d');
+      if (!ctx) {
+        console.error('Unable to get 2D context from canvas');
+        return;
+      }
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.drawImage(videoRef.current, 0, 0, ctx.canvas.width, ctx.canvas.height);
 
     const counts = {};
     predictions.forEach(prediction => {
