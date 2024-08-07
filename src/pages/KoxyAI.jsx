@@ -10,7 +10,7 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: 'https://api.enginelabs.ai/v1',
   headers: {
-    'Authorization': 'Bearer YOUR_ENGINE_LABS_API_KEY',
+    'Authorization': 'Bearer YOUR_ACTUAL_ENGINE_LABS_API_KEY',
     'Content-Type': 'application/json'
   }
 });
