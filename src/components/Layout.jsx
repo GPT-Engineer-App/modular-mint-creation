@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./mode-toggle";
-import { Home, BarChart2, Settings, LogOut } from "lucide-react";
+import { Home, BarChart2, Settings, LogOut, Video } from "lucide-react";
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -30,6 +30,12 @@ const Layout = () => {
                 <Link to="/settings" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
                   <Settings className="h-5 w-5" />
                   <span>Settings</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/object-detection" className="flex items-center space-x-2 p-2 rounded hover:bg-primary/10">
+                  <Video className="h-5 w-5" />
+                  <span>Object Detection</span>
                 </Link>
               </li>
             </ul>

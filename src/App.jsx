@@ -8,6 +8,7 @@ import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Statistics from "@/pages/Statistics";
 import Settings from "@/pages/Settings";
+import ObjectDetection from "@/pages/ObjectDetection";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/statistics" element={<Statistics />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/object-detection" element={<ObjectDetection />} />
             </Route>
           </Routes>
         </BrowserRouter>

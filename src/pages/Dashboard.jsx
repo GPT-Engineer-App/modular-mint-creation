@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { koxyAPI } from 'koxy-js';
+import axios from 'axios';
 
-const api = new koxyAPI("m1OlWDWBaw2r5FQrmWvWEdSW_S6unteHK4dS8RQk5VU.GW6sdI6y7UoVI9sOO6OVUuHlBjR77J5Zm17aWmHDBhw", "XCQCQtKOf8kU40mmAaKt1KUkiDObCADqLiUdkgr_-XA.dqqcfN_G2tYAVSvsetdwYinj0ayHsdpf21KMA1BtHc0");
+const api = axios.create({
+  baseURL: 'https://backengine-nqhbcnzf.fly.dev/api',
+});
 
 const Dashboard = () => {
   const [counts, setCounts] = useState({});
@@ -13,14 +15,14 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const countsResult = await api.run("get_counts", {});
-        setCounts(countsResult);
-
-        const statsResult = await api.run("get_stats", {});
-        setStats(statsResult);
-
-        const alertsResult = await api.run("get_alerts", {});
-        setAlerts(alertsResult);
+        const [countsResponse, statsResponse, alertsResponse] = await Promise.all([
+          api.get('/object_counts'),
+          api.get('/daily_stats'),
+          api.get('/alerts')
+        ]);
+        setCounts(countsResponse.data);
+        setStats(statsResponse.data);
+        setAlerts(alertsResponse.data);
       } catch (error) {
         console.error('Error fetching data:', error);
       }

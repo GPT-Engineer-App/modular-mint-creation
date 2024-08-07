@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { koxyAPI } from 'koxy-js';
+import axios from 'axios';
 
-const api = new koxyAPI("m1OlWDWBaw2r5FQrmWvWEdSW_S6unteHK4dS8RQk5VU.GW6sdI6y7UoVI9sOO6OVUuHlBjR77J5Zm17aWmHDBhw", "XCQCQtKOf8kU40mmAaKt1KUkiDObCADqLiUdkgr_-XA.dqqcfN_G2tYAVSvsetdwYinj0ayHsdpf21KMA1BtHc0");
+const api = axios.create({
+  baseURL: 'https://backengine-nqhbcnzf.fly.dev/api',
+});
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -15,8 +17,8 @@ const Settings = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const result = await api.run("get_settings", {});
-        setSettings(result);
+        const response = await api.get('/settings');
+        setSettings(response.data);
       } catch (error) {
         console.error('Error fetching settings:', error);
       }
@@ -33,7 +35,7 @@ const Settings = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.run("update_settings", settings);
+      await api.put('/settings', settings);
       alert('Settings updated successfully');
     } catch (error) {
       console.error('Error updating settings:', error);

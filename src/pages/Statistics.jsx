@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { koxyAPI } from 'koxy-js';
+import axios from 'axios';
 
-const api = new koxyAPI("m1OlWDWBaw2r5FQrmWvWEdSW_S6unteHK4dS8RQk5VU.GW6sdI6y7UoVI9sOO6OVUuHlBjR77J5Zm17aWmHDBhw", "XCQCQtKOf8kU40mmAaKt1KUkiDObCADqLiUdkgr_-XA.dqqcfN_G2tYAVSvsetdwYinj0ayHsdpf21KMA1BtHc0");
+const api = axios.create({
+  baseURL: 'https://backengine-nqhbcnzf.fly.dev/api',
+});
 
 const Statistics = () => {
   const [stats, setStats] = useState([]);
@@ -11,8 +13,14 @@ const Statistics = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const result = await api.run("get_advanced_stats", {});
-        setStats(result);
+        const [systemStatsResponse, dailyStatsResponse] = await Promise.all([
+          api.get('/system_stats'),
+          api.get('/daily_stats')
+        ]);
+        setStats({
+          systemStats: systemStatsResponse.data,
+          dailyStats: dailyStatsResponse.data
+        });
       } catch (error) {
         console.error('Error fetching advanced stats:', error);
       }
