@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./mode-toggle";
@@ -15,10 +15,10 @@ const Layout = () => {
     setIsClient(true);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     navigate('/login');
-  };
+  }, [logout, navigate]);
 
   useEffect(() => {
     if (!isAuthenticated) {

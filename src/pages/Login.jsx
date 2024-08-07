@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setError('');
     try {
@@ -23,7 +23,7 @@ const Login = () => {
       console.error('Login failed:', error);
       setError('Invalid email or password. Please try again.');
     }
-  };
+  }, [email, password, login, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
