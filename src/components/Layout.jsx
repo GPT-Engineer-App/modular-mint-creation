@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./mode-toggle";
@@ -7,8 +7,13 @@ import { useAuth } from '../hooks/useAuth';
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   const { logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -20,6 +25,10 @@ const Layout = () => {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
+
+  if (!isClient) {
+    return null; // or a loading indicator
+  }
 
   return (
     <div className="flex h-screen bg-background">

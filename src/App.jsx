@@ -16,7 +16,13 @@ import KoxyAI from "./pages/KoxyAI";
 import VAD from "./pages/VAD";
 import HuggingFaceDemo from "./pages/HuggingFaceDemo";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      suspense: true,
+    },
+  },
+});
 
 const App = () => (
   <AuthProvider>
@@ -25,19 +31,21 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                <Route index element={<Index />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/statistics" element={<Statistics />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/object-detection" element={<ObjectDetection />} />
-                <Route path="/koxy-ai" element={<KoxyAI />} />
-                <Route path="/vad" element={<VAD />} />
-                <Route path="/huggingface" element={<HuggingFaceDemo />} />
-              </Route>
-            </Routes>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  <Route index element={<Index />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/statistics" element={<Statistics />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/object-detection" element={<React.Suspense fallback={<div>Loading Object Detection...</div>}><ObjectDetection /></React.Suspense>} />
+                  <Route path="/koxy-ai" element={<React.Suspense fallback={<div>Loading Koxy AI...</div>}><KoxyAI /></React.Suspense>} />
+                  <Route path="/vad" element={<React.Suspense fallback={<div>Loading VAD...</div>}><VAD /></React.Suspense>} />
+                  <Route path="/huggingface" element={<React.Suspense fallback={<div>Loading Hugging Face Demo...</div>}><HuggingFaceDemo /></React.Suspense>} />
+                </Route>
+              </Routes>
+            </React.Suspense>
           </BrowserRouter>
         </TooltipProvider>
       </NextThemesProvider>
