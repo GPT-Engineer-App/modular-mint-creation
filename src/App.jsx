@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
@@ -15,7 +15,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
         <Toaster />
         <BrowserRouter>
@@ -30,7 +30,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </ThemeProvider>
+    </NextThemesProvider>
   </QueryClientProvider>
 );
 
