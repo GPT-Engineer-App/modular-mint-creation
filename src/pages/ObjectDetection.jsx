@@ -3,13 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
-import { toPng } from 'html-to-image';
 
 const ObjectDetection = () => {
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [objectCounts, setObjectCounts] = useState({});
+  const [isWebcamStarted, setIsWebcamStarted] = useState(false);
+  const [predictions, setPredictions] = useState([]);
+  const [detectionInterval, setDetectionInterval] = useState();
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
   const modelRef = useRef(null);
 
   useEffect(() => {
@@ -30,83 +29,58 @@ const ObjectDetection = () => {
     };
   }, []);
 
-  const startDetection = async () => {
-    if (!modelRef.current) {
-      console.error('Model not loaded yet');
-      return;
+  useEffect(() => {
+    if (isWebcamStarted) {
+      setDetectionInterval(setInterval(predictObject, 500))
+    } else {
+      if (detectionInterval) {
+        clearInterval(detectionInterval)
+        setDetectionInterval(null)
+      }
     }
+  }, [isWebcamStarted]);
 
+  const startWebcam = async () => {
     try {
+      setIsWebcamStarted(true)
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoRef.current.srcObject = stream;
-      videoRef.current.play();
-      setIsDetecting(true);
-      detectFrame();
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
     } catch (error) {
+      setIsWebcamStarted(false)
       console.error('Error accessing webcam:', error);
     }
   };
 
-  const stopDetection = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
-    }
-    setIsDetecting(false);
-    setObjectCounts({});
-    captureCanvas();
-  };
+  const stopWebcam = () => {
+    const video = videoRef.current;
 
-  const captureCanvas = () => {
-    if (canvasRef.current) {
-      toPng(canvasRef.current)
-        .then((dataUrl) => {
-          const link = document.createElement('a');
-          link.download = 'object-detection.png';
-          link.href = dataUrl;
-          link.click();
-        })
-        .catch((error) => {
-          console.error('Error capturing canvas:', error);
-        });
+    if (video) {
+      const stream = video.srcObject;
+      const tracks = stream.getTracks();
+
+      tracks.forEach((track) => {
+        track.stop();
+      });
+
+      video.srcObject = null;
+      setPredictions([])
+      setIsWebcamStarted(false)
     }
   };
 
-  const detectFrame = async () => {
-    if (!isDetecting || !modelRef.current || !videoRef.current || !canvasRef.current) return;
+  const predictObject = async () => {
+    if (!modelRef.current || !videoRef.current) return;
 
     try {
       const predictions = await modelRef.current.detect(videoRef.current);
-      const ctx = canvasRef.current.getContext('2d');
-      if (!ctx) {
-        console.error('Unable to get 2D context from canvas');
-        return;
-      }
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.drawImage(videoRef.current, 0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    const counts = {};
-    predictions.forEach(prediction => {
-      const [x, y, width, height] = prediction.bbox;
-      ctx.strokeStyle = '#00FFFF';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, width, height);
-      ctx.fillStyle = '#00FFFF';
-      ctx.fillText(
-        `${prediction.class} (${Math.round(prediction.score * 100)}%)`,
-        x,
-        y > 10 ? y - 5 : 10
-      );
-
-      counts[prediction.class] = (counts[prediction.class] || 0) + 1;
-    });
-
-    setObjectCounts(counts);
-    requestAnimationFrame(detectFrame);
-  } catch (error) {
-    console.error('Error in detectFrame:', error);
-  }
-};
+      setPredictions(predictions);
+    } catch (err) {
+      console.error(err)
+    }
+  };
 
 return (
     <div className="container mx-auto p-4">
@@ -121,40 +95,57 @@ return (
               <video
                 ref={videoRef}
                 className="w-full max-w-2xl"
-                style={{ display: 'none' }}
+                autoPlay
+                muted
               />
-              <canvas
-                ref={canvasRef}
-                className="w-full max-w-2xl border border-gray-300"
-                width="640"
-                height="480"
-              />
+              {predictions.map((prediction, index) => (
+                <React.Fragment key={index}>
+                  <p
+                    className="absolute bg-orange-500 bg-opacity-85 text-white border border-dashed border-white z-10 text-xs m-0 p-1"
+                    style={{
+                      left: `${prediction.bbox[0]}px`,
+                      top: `${prediction.bbox[1]}px`,
+                      width: `${prediction.bbox[2] - 100}px`
+                    }}
+                  >
+                    {`${prediction.class} - ${Math.round(prediction.score * 100)}% confidence`}
+                  </p>
+                  <div
+                    className="absolute bg-green-500 bg-opacity-25 border border-dashed border-white z-0"
+                    style={{
+                      left: `${prediction.bbox[0]}px`,
+                      top: `${prediction.bbox[1]}px`,
+                      width: `${prediction.bbox[2]}px`,
+                      height: `${prediction.bbox[3]}px`
+                    }}
+                  />
+                </React.Fragment>
+              ))}
             </div>
             <div className="flex space-x-4">
-              <Button onClick={startDetection} disabled={isDetecting}>
-                Start Detection
-              </Button>
-              <Button onClick={stopDetection} disabled={!isDetecting}>
-                Stop Detection
+              <Button onClick={isWebcamStarted ? stopWebcam : startWebcam}>
+                {isWebcamStarted ? "Stop" : "Start"} Webcam
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Object Counts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul>
-            {Object.entries(objectCounts).map(([object, count]) => (
-              <li key={object}>
-                {object}: {count}
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      {predictions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Predictions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul>
+              {predictions.map((prediction, index) => (
+                <li key={index}>
+                  {`${prediction.class} (${(prediction.score * 100).toFixed(2)}%)`}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
