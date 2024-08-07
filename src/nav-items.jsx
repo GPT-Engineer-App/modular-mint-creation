@@ -1,5 +1,7 @@
-import { Home, Info, Settings, Bot } from "lucide-react";
+import { Home, Info, Settings, Bot, Mic } from "lucide-react";
 import Index from "./pages/Index.jsx";
+import KoxyAI from "./pages/KoxyAI";
+import VAD from "./pages/VAD";
 
 /**
  * Central place for defining the navigation items. Used for navigation components and routing.
@@ -29,6 +31,10 @@ export const navItems = [
     icon: <Bot className="h-4 w-4" />,
     page: <KoxyAI />,
   },
+  {
+    title: "VAD",
+    to: "/vad",
+    icon: <Mic className="h-4 w-4" />,
+    page: <VAD />,
+  },
 ];
-
-import KoxyAI from "./pages/KoxyAI";
