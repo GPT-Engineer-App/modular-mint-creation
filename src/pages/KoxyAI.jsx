@@ -37,12 +37,19 @@ const KoxyAI = () => {
   };
 
   useEffect(() => {
-    const unsubscribe = api.realtime.subscribe('XCQCQtKOf8/events', (event) => {
-      setEvents((prevEvents) => [...prevEvents, event]);
-    });
+    let unsubscribe;
+    if (api.realtime && typeof api.realtime.subscribe === 'function') {
+      unsubscribe = api.realtime.subscribe('XCQCQtKOf8/events', (event) => {
+        setEvents((prevEvents) => [...prevEvents, event]);
+      });
+    } else {
+      console.warn('Realtime subscription is not available');
+    }
 
     return () => {
-      unsubscribe();
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
   }, []);
 
