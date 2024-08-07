@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import axios from 'axios';
+import { Client } from "@gradio/client";
 
 const HuggingFaceDemo = () => {
   const [input, setInput] = useState('');
@@ -17,17 +17,11 @@ const HuggingFaceDemo = () => {
     setError(null);
 
     try {
-      const result = await axios.post(
-        'https://api-inference.huggingface.co/models/gpt2',
-        { inputs: input },
-        {
-          headers: {
-            'Authorization': 'Bearer YOUR_HUGGING_FACE_API_KEY',
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      setResponse(result.data[0].generated_text);
+      const client = await Client.connect("janasumit2911/BottlesCansClassify");
+      const result = await client.predict("/predict", { 		
+        params: input, 
+      });
+      setResponse(JSON.stringify(result.data, null, 2));
     } catch (error) {
       console.error('Error:', error);
       setError('An error occurred while processing your request. Please try again.');
@@ -38,21 +32,21 @@ const HuggingFaceDemo = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Hugging Face Inference API Demo</h1>
+      <h1 className="text-2xl font-bold mb-4">Bottles and Cans Classifier Demo</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Text Generation with GPT-2</CardTitle>
+          <CardTitle>Image Classification</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Enter a prompt for text generation"
+              placeholder="Enter image URL"
               className="w-full"
             />
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Generating...' : 'Generate Text'}
+              {isLoading ? 'Classifying...' : 'Classify Image'}
             </Button>
           </form>
           {error && (
@@ -60,7 +54,7 @@ const HuggingFaceDemo = () => {
           )}
           {response && (
             <div className="mt-4">
-              <h2 className="text-xl font-semibold mb-2">Generated Text:</h2>
+              <h2 className="text-xl font-semibold mb-2">Classification Result:</h2>
               <Textarea
                 value={response}
                 readOnly
