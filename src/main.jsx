@@ -4,8 +4,8 @@ import { ThemeProvider } from "next-themes";
 import App from "./App.jsx";
 import "./index.css";
 
-createRoot(
-  document.getElementById("root"),
+const root = createRoot(document.getElementById("root"));
+root.render(
   <React.StrictMode>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <App />

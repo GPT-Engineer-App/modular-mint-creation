@@ -15,6 +15,32 @@ const api = axios.create({
   }
 });
 
+// Add a response interceptor
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error("Server responded with error:", error.response.status, error.response.data);
+      if (error.response.status === 429) {
+        // Implement exponential backoff here
+        // For simplicity, we'll just wait for 5 seconds before retrying
+        return new Promise(resolve => {
+          setTimeout(() => resolve(api(error.config)), 5000);
+        });
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error("No response received:", error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error("Error setting up request:", error.message);
+    }
+    return Promise.reject(error);
+  }
+);
+
 const KoxyAI = () => {
   const [chatInput, setChatInput] = useState('');
   const [chatResponse, setChatResponse] = useState('');
@@ -34,7 +60,11 @@ const KoxyAI = () => {
       setChatResponse(response.data.response);
     } catch (error) {
       console.error('Error:', error);
-      setError('An error occurred while processing your chat request.');
+      if (error.response && error.response.status === 502) {
+        setError('The server is currently unavailable. Please try again later.');
+      } else {
+        setError('An error occurred while processing your chat request.');
+      }
     } finally {
       setIsLoading(false);
     }
