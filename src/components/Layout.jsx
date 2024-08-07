@@ -3,7 +3,7 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./mode-toggle";
 import { Home, BarChart2, Settings, LogOut, Video, Bot, Mic, Brain } from "lucide-react";
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth.jsx';
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
