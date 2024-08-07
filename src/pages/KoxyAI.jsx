@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const api = new koxyAPI("m1OlWDWBaw2r5FQrmWvWEdSW_S6unteHK4dS8RQk5VU.GW6sdI6y7UoVI9sOO6OVUuHlBjR77J5Zm17aWmHDBhw", "XCQCQtKOf8kU40mmAaKt1KUkiDObCADqLiUdkgr_-XA.dqqcfN_G2tYAVSvsetdwYinj0ayHsdpf21KMA1BtHc0");
+const api = useMemo(() => new koxyAPI("m1OlWDWBaw2r5FQrmWvWEdSW_S6unteHK4dS8RQk5VU.GW6sdI6y7UoVI9sOO6OVUuHlBjR77J5Zm17aWmHDBhw", "XCQCQtKOf8kU40mmAaKt1KUkiDObCADqLiUdkgr_-XA.dqqcfN_G2tYAVSvsetdwYinj0ayHsdpf21KMA1BtHc0"), []);
 
 const KoxyAI = () => {
   const [chatInput, setChatInput] = useState('');
@@ -20,7 +20,7 @@ const KoxyAI = () => {
   const [error, setError] = useState(null);
   const [events, setEvents] = useState([]);
 
-  const handleChatSubmit = async (e) => {
+  const handleChatSubmit = useCallback(async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -36,7 +36,7 @@ const KoxyAI = () => {
     }
   };
 
-  const handleDocumentSubmit = async (e) => {
+  const handleDocumentSubmit = useCallback(async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -50,9 +50,9 @@ const KoxyAI = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [documentInput, api]);
 
-  const handleQuerySubmit = async (e) => {
+  const handleQuerySubmit = useCallback(async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -83,7 +83,9 @@ const KoxyAI = () => {
         unsubscribe();
       }
     };
-  }, []);
+  }, [api]);
+
+  const memoizedEvents = useMemo(() => events, [events]);
 
   return (
     <div className="container mx-auto p-4">
