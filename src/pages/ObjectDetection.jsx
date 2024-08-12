@@ -36,8 +36,8 @@ const ObjectDetection = () => {
   const [customClass, setCustomClass] = useState('');
   const [availableClasses, setAvailableClasses] = useState(['plastic bottles', 'aluminium cans', 'cardboard', 'milk cartons']);
   const [settings, setSettings] = useState({
-    alertThreshold: 5,
-    detectionSensitivity: 0.5,
+    alertThreshold: 1,
+    detectionSensitivity: 0.2,
     alertThresholdEnabled: true,
     detectionSensitivityEnabled: true,
   });

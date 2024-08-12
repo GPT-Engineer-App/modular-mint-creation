@@ -17,10 +17,10 @@ const api = axios.create({
 
 const Settings = () => {
   const [settings, setSettings] = useState({
-    alertThreshold: '',
-    detectionSensitivity: '',
-    alertThresholdEnabled: false,
-    detectionSensitivityEnabled: false,
+    alertThreshold: '1',
+    detectionSensitivity: '0.2',
+    alertThresholdEnabled: true,
+    detectionSensitivityEnabled: true,
   });
   const [error, setError] = useState(null);
 
@@ -28,10 +28,17 @@ const Settings = () => {
     const fetchSettings = async () => {
       try {
         const response = await api.get('/settings');
-        setSettings(response.data);
+        setSettings(prevSettings => ({
+          ...prevSettings,
+          ...response.data,
+          alertThreshold: response.data.alertThreshold || '1',
+          detectionSensitivity: response.data.detectionSensitivity || '0.2',
+          alertThresholdEnabled: response.data.alertThresholdEnabled !== undefined ? response.data.alertThresholdEnabled : true,
+          detectionSensitivityEnabled: response.data.detectionSensitivityEnabled !== undefined ? response.data.detectionSensitivityEnabled : true,
+        }));
       } catch (error) {
         console.error('Error fetching settings:', error);
-        setError('Failed to fetch settings. Please check your connection and try again.');
+        setError('Failed to fetch settings. Using default values.');
       }
     };
 
