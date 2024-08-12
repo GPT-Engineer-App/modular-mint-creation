@@ -12,6 +12,7 @@ import { PlusCircle } from 'lucide-react';
 import axios from 'axios';
 import Webcam from 'react-webcam';
 import { useDropzone } from 'react-dropzone';
+import * as YOLO from 'yolo-js';
 
 const api = axios.create({
   baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
@@ -40,94 +41,41 @@ const ObjectDetection = () => {
     alertThresholdEnabled: true,
     detectionSensitivityEnabled: true,
   });
-  const [worker, setWorker] = useState(null);
+  const [model, setModel] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const location = useLocation();
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    const detectionWorker = new Worker(new URL('../workers/detectionWorker.js', import.meta.url));
-    setWorker(detectionWorker);
-
-    detectionWorker.postMessage({ type: 'load', modelUrl: '/path/to/your/yolov8.onnx' });
-
-    detectionWorker.addEventListener('message', (event) => {
-      if (event.data.type === 'loaded') {
-        console.log('ONNX model loaded successfully');
-      } else if (event.data.type === 'result') {
-        const processedResults = processOnnxResults(event.data.results);
-        setPredictions(processedResults);
-      } else if (event.data.type === 'error') {
-        console.error('Worker error:', event.data.error);
+    const loadModel = async () => {
+      try {
+        const loadedModel = await YOLO.load('/path/to/your/yolov8.onnx');
+        setModel(loadedModel);
+        console.log('YOLO model loaded successfully');
+      } catch (error) {
+        console.error('Error loading YOLO model:', error);
       }
-    });
+    };
+
+    loadModel();
 
     return () => {
-      detectionWorker.terminate();
+      if (model) {
+        model.dispose();
+      }
     };
   }, []);
 
-  const processOnnxResults = (results) => {
-    // Implement this function to process the ONNX model output
-    // and return it in a format similar to COCO-SSD output
-    return results.map(result => ({
-      // Map the ONNX output to the expected format
-      // This will depend on your specific YOLO v8 model output format
-      // Adjust according to your model's output
-      class: result.class,
-      score: result.score,
-      bbox: result.bbox
-    }));
-  };
+  const runInference = async (imageData) => {
+    if (!model) return;
 
-  const runInference = (imageData) => {
-    if (!worker) return;
-
-    worker.postMessage({ type: 'run', imageData });
-  };
-
-  const [worker, setWorker] = useState(null);
-
-  useEffect(() => {
-    const detectionWorker = new Worker(new URL('../workers/detectionWorker.js', import.meta.url));
-    setWorker(detectionWorker);
-
-    detectionWorker.postMessage({ type: 'load', modelUrl: '/path/to/your/yolov8.onnx' });
-
-    detectionWorker.addEventListener('message', (event) => {
-      if (event.data.type === 'loaded') {
-        console.log('ONNX model loaded successfully');
-      } else if (event.data.type === 'result') {
-        const processedResults = processOnnxResults(event.data.results);
-        setPredictions(processedResults);
-      } else if (event.data.type === 'error') {
-        console.error('Worker error:', event.data.error);
-      }
-    });
-
-    return () => {
-      detectionWorker.terminate();
-    };
-  }, []);
-
-  const processOnnxResults = (results) => {
-    // Implement this function to process the ONNX model output
-    // and return it in a format similar to COCO-SSD output
-    return results.map(result => ({
-      // Map the ONNX output to the expected format
-      // This will depend on your specific YOLO v8 model output format
-      // Adjust according to your model's output
-      class: result.class,
-      score: result.score,
-      bbox: result.bbox
-    }));
-  };
-
-  const runInference = (imageData) => {
-    if (!worker) return;
-
-    worker.postMessage({ type: 'run', imageData });
+    try {
+      const predictions = await model.detect(imageData);
+      setPredictions(predictions);
+    } catch (error) {
+      console.error('Inference error:', error);
+    }
   };
 
   const onDrop = useCallback((acceptedFiles) => {
@@ -246,18 +194,16 @@ const ObjectDetection = () => {
   }, []);
 
   const predictObject = async () => {
-    if (!modelRef.current || !videoRef.current || !canvasRef.current) return;
+    if (!model || !webcamRef.current || !canvasRef.current) return;
 
     try {
-      const video = videoRef.current;
+      const video = webcamRef.current.video;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
 
       // Ensure canvas dimensions match video dimensions
-      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-      }
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
       // Clear the canvas and draw the video frame
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -266,130 +212,97 @@ const ObjectDetection = () => {
       // Draw the counting line
       const linePos = canvas.width * (linePosition / 100);
       ctx.beginPath();
-      if (isPortrait) {
-        ctx.moveTo(0, linePos);
-        ctx.lineTo(canvas.width, linePos);
-      } else {
-        ctx.moveTo(linePos, 0);
-        ctx.lineTo(linePos, canvas.height);
-      }
+      ctx.moveTo(linePos, 0);
+      ctx.lineTo(linePos, canvas.height);
       ctx.strokeStyle = 'red';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Add text to show line position
-      ctx.fillStyle = 'red';
-      ctx.font = '14px Arial';
-      ctx.fillText(`Line: ${linePosition}%`, 10, 20);
+      // Perform object detection
+      const predictions = await model.detect(canvas);
+      const filteredPredictions = settings.detectionSensitivityEnabled
+        ? predictions.filter(pred => pred.score >= settings.detectionSensitivity)
+        : predictions;
 
-      // Perform object detection only if detection sensitivity is enabled
-      let predictions = [];
-      if (settings.detectionSensitivityEnabled) {
-        predictions = await modelRef.current.detect(canvas);
-        predictions = predictions.filter(pred => pred.score >= settings.detectionSensitivity);
-      }
-      setPredictions(predictions);
-
-      const newTrackedObjects = { ...trackedObjects };
+      // Process predictions and update tracking
+      const newTrackedObjects = {};
       const counts = {};
-
-      const filteredPredictions = selectedClasses.includes('all')
-        ? predictions
-        : predictions.filter(prediction => selectedClasses.includes(prediction.class));
 
       filteredPredictions.forEach(prediction => {
         const { class: objectClass, bbox, score } = prediction;
         const [x, y, width, height] = bbox;
         const objectId = `${objectClass}_${Math.round(x)}_${Math.round(y)}`;
-        const objectCenter = isPortrait ? y + height / 2 : x + width / 2;
+        const objectCenter = x + width / 2;
 
-        const isLocked = lockedObject && lockedObject.id === objectId;
-        ctx.strokeStyle = isLocked ? '#FF0000' : '#00FFFF';
-        ctx.lineWidth = 4;
+        // Draw bounding box and label
+        ctx.strokeStyle = '#00FFFF';
+        ctx.lineWidth = 2;
         ctx.strokeRect(x, y, width, height);
-
-        ctx.fillStyle = isLocked ? '#FF0000' : '#00FFFF';
-        ctx.font = '18px Arial';
+        ctx.fillStyle = '#00FFFF';
+        ctx.font = '14px Arial';
         ctx.fillText(`${objectClass} - ${Math.round(score * 100)}%`, x, y > 10 ? y - 5 : 10);
 
-        if (isLocked) {
-          ctx.fillStyle = '#FF0000';
-          ctx.fillText('🔒', x + width - 20, y + 20);
-        }
-
-        if (newTrackedObjects[objectId]) {
-          const prevCenter = newTrackedObjects[objectId].center;
+        // Update tracking
+        if (trackedObjects[objectId]) {
+          const prevCenter = trackedObjects[objectId].center;
           if ((prevCenter <= linePos && objectCenter > linePos) || (prevCenter >= linePos && objectCenter < linePos)) {
             counts[objectClass] = (counts[objectClass] || 0) + 1;
           }
-          newTrackedObjects[objectId] = { 
-            class: objectClass, 
-            center: objectCenter, 
-            lastSeen: Date.now(),
-            bbox: [x, y, width, height]
-          };
-        } else {
-          newTrackedObjects[objectId] = { 
-            class: objectClass, 
-            center: objectCenter, 
-            lastSeen: Date.now(),
-            bbox: [x, y, width, height]
-          };
         }
+
+        newTrackedObjects[objectId] = { 
+          class: objectClass, 
+          center: objectCenter, 
+          lastSeen: Date.now(),
+          bbox: [x, y, width, height]
+        };
       });
 
-      // Update locked object position if it's still visible
-      if (lockedObject) {
-        const updatedObject = newTrackedObjects[lockedObject.id];
-        if (updatedObject) {
-          setLockedObject({
-            ...lockedObject,
-            bbox: updatedObject.bbox
-          });
-        } else {
-          setLockedObject(null);
-        }
-      }
-
-      // Remove objects that haven't been seen for more than 5 seconds
-      const now = Date.now();
-      Object.keys(newTrackedObjects).forEach(id => {
-        if (now - newTrackedObjects[id].lastSeen > 5000) {
-          delete newTrackedObjects[id];
-        }
-      });
-
+      // Update tracked objects and counts
       setTrackedObjects(newTrackedObjects);
+      updateObjectCounts(counts);
 
-      setObjectCounts(prevCounts => {
-        const newCounts = { ...prevCounts };
-        Object.entries(counts).forEach(([key, value]) => {
-          newCounts[key] = (newCounts[key] || 0) + value;
-        });
-        sessionStorage.setItem('objectCounts', JSON.stringify(newCounts));
-        return newCounts;
-      });
+      // Update historical data
+      updateHistoricalData(counts);
 
-      // Update historical data every minute
-      const nowDate = new Date();
-      if (nowDate.getSeconds() === 0) {
-        setHistoricalData(prevData => {
-          const newData = [...prevData, { timestamp: nowDate.toISOString(), ...counts }];
-          localStorage.setItem('historicalData', JSON.stringify(newData.slice(-60))); // Keep last 60 data points
-          return newData.slice(-60);
-        });
-      }
+      // Check alert threshold
+      checkAlertThreshold(counts);
 
-      // Check if alert threshold is reached
-      if (settings.alertThresholdEnabled) {
-        const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
-        if (totalCount >= settings.alertThreshold) {
-          console.log(`Alert: Threshold of ${settings.alertThreshold} objects crossed!`);
-          // Here you can implement additional alert logic, like showing a notification
-        }
-      }
     } catch (err) {
-      console.error(err);
+      console.error('Prediction error:', err);
+    }
+  };
+
+  const updateObjectCounts = (counts) => {
+    setObjectCounts(prevCounts => {
+      const newCounts = { ...prevCounts };
+      Object.entries(counts).forEach(([key, value]) => {
+        newCounts[key] = (newCounts[key] || 0) + value;
+      });
+      sessionStorage.setItem('objectCounts', JSON.stringify(newCounts));
+      return newCounts;
+    });
+  };
+
+  const updateHistoricalData = (counts) => {
+    const now = new Date();
+    if (now.getSeconds() === 0) {
+      setHistoricalData(prevData => {
+        const newData = [...prevData, { timestamp: now.toISOString(), ...counts }];
+        const updatedData = newData.slice(-60); // Keep last 60 data points
+        localStorage.setItem('historicalData', JSON.stringify(updatedData));
+        return updatedData;
+      });
+    }
+  };
+
+  const checkAlertThreshold = (counts) => {
+    if (settings.alertThresholdEnabled) {
+      const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
+      if (totalCount >= settings.alertThreshold) {
+        console.log(`Alert: Threshold of ${settings.alertThreshold} objects crossed!`);
+        // Implement additional alert logic here (e.g., show a notification)
+      }
     }
   };
 
