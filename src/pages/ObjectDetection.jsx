@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { useLocation } from 'react-router-dom';
@@ -85,7 +86,7 @@ const ObjectDetection = () => {
     }
   };
 
-  const stopWebcam = () => {
+  const stopWebcam = useCallback(() => {
     const video = videoRef.current;
 
     if (video && video.srcObject) {
@@ -100,7 +101,18 @@ const ObjectDetection = () => {
       setPredictions([]);
     }
     setIsWebcamStarted(false);
-  };
+    if (detectionInterval) {
+      clearInterval(detectionInterval);
+      setDetectionInterval(null);
+    }
+  }, [detectionInterval]);
+
+  const resetCounts = useCallback(() => {
+    setObjectCounts({});
+    setHistoricalData([]);
+    sessionStorage.removeItem('objectCounts');
+    localStorage.removeItem('historicalData');
+  }, []);
 
   const predictObject = async () => {
     if (!modelRef.current || !videoRef.current || !canvasRef.current) return;
@@ -206,6 +218,9 @@ const ObjectDetection = () => {
               <Button onClick={isWebcamStarted ? stopWebcam : startWebcam}>
                 {isWebcamStarted ? "Stop" : "Start"} Webcam
               </Button>
+              <Button onClick={resetCounts}>
+                Reset Counts
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -215,13 +230,19 @@ const ObjectDetection = () => {
           <CardTitle>Object Counts</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul>
-            {Object.entries(objectCounts).map(([objectClass, count]) => (
-              <li key={objectClass}>
-                {`${objectClass}: ${count}`}
-              </li>
-            ))}
-          </ul>
+          {Object.keys(objectCounts).length > 0 ? (
+            <ul>
+              {Object.entries(objectCounts).map(([objectClass, count]) => (
+                <li key={objectClass}>
+                  {`${objectClass}: ${count}`}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Alert>
+              <AlertDescription>No objects detected yet.</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
       <Card>
