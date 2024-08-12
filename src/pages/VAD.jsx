@@ -103,6 +103,15 @@ const VAD = () => {
 
     recognition.onerror = (event) => {
       console.error('Speech recognition error', event.error);
+      if (event.error === 'aborted') {
+        console.log('Speech recognition was aborted. Retrying...');
+        setTimeout(recognizeCommand, 1000); // Retry after 1 second
+      }
+    };
+
+    recognition.onend = () => {
+      console.log('Speech recognition ended. Restarting...');
+      recognition.start();
     };
   };
 

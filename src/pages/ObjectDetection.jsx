@@ -103,6 +103,12 @@ const ObjectDetection = () => {
       }
 
       const ctx = canvasRef.current.getContext('2d');
+      
+      // Ensure canvas dimensions match video dimensions
+      if (canvasRef.current.width !== video.videoWidth || canvasRef.current.height !== video.videoHeight) {
+        canvasRef.current.width = video.videoWidth;
+        canvasRef.current.height = video.videoHeight;
+      }
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       ctx.drawImage(video, 0, 0, ctx.canvas.width, ctx.canvas.height);
 
