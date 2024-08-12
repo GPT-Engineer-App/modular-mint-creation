@@ -75,4 +75,5 @@ const App = () => {
   </AuthProvider>
 );
 
-export default App;
+const AppExport = App;
+export { AppExport as default };
