@@ -93,6 +93,7 @@ const Settings = () => {
             </div>
             <Button type="submit">Save Settings</Button>
           </form>
+          )}
         </CardContent>
       </Card>
     </div>
