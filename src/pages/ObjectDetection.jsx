@@ -139,6 +139,7 @@ const ObjectDetection = () => {
 
   const stopWebcam = useCallback(() => {
     const video = videoRef.current;
+    const canvas = canvasRef.current;
 
     if (video && video.srcObject) {
       const stream = video.srcObject;
@@ -151,6 +152,13 @@ const ObjectDetection = () => {
       video.srcObject = null;
       setPredictions([]);
     }
+
+    // Clear the canvas
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
     setIsWebcamStarted(false);
     if (detectionInterval) {
       clearInterval(detectionInterval);

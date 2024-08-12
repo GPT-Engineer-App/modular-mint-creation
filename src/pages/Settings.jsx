@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label";
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://backengine-nqhbcnzf.fly.dev/api',
-  withCredentials: true,
+  baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
   headers: {
+    'X-Requested-With': 'XMLHttpRequest',
     'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
   },
 });
@@ -59,7 +59,11 @@ const Settings = () => {
       }
     } catch (error) {
       console.error('Error updating settings:', error);
-      setError('Failed to update settings. Please check your connection and try again.');
+      if (error.response && error.response.status === 403) {
+        setError('Access denied. Please check your authentication or permissions.');
+      } else {
+        setError('Failed to update settings. Please check your connection and try again.');
+      }
     }
   };
 
