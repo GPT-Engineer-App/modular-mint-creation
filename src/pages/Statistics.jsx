@@ -6,6 +6,9 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: 'https://backengine-nqhbcnzf.fly.dev/api',
   withCredentials: true,
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+  },
 });
 
 const Statistics = () => {
