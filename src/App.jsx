@@ -47,12 +47,12 @@ const App = () => {
   }, []);
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <AuthProvider>
               <React.Suspense fallback={<div>Loading...</div>}>
                 <Routes>
                   <Route path="/login" element={<Login />} />
@@ -68,11 +68,11 @@ const App = () => {
                   </Route>
                 </Routes>
               </React.Suspense>
-            </BrowserRouter>
-          </TooltipProvider>
-        </NextThemesProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </NextThemesProvider>
+    </QueryClientProvider>
   );
 };
 
