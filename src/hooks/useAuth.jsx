@@ -2,10 +2,8 @@ import React, { useState, useEffect, createContext, useContext, useCallback } fr
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev',
-  headers: {
-    'X-Requested-With': 'XMLHttpRequest',
-  },
+  baseURL: 'https://backengine-nqhbcnzf.fly.dev',
+  withCredentials: true,
 });
 
 const AuthContext = createContext(null);

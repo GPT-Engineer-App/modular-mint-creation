@@ -8,10 +8,8 @@ import { Label } from "@/components/ui/label";
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
-  headers: {
-    'X-Requested-With': 'XMLHttpRequest',
-  },
+  baseURL: 'https://backengine-nqhbcnzf.fly.dev/api',
+  withCredentials: true,
 });
 
 const Settings = () => {
@@ -30,7 +28,7 @@ const Settings = () => {
         setSettings(response.data);
       } catch (error) {
         console.error('Error fetching settings:', error);
-        setError('Failed to fetch settings. Please try again later.');
+        setError('Failed to fetch settings. Please check your connection and try again.');
       }
     };
 
@@ -50,11 +48,15 @@ const Settings = () => {
     e.preventDefault();
     setError(null);
     try {
-      await api.put('/settings', settings);
-      setError('Settings updated successfully');
+      const response = await api.put('/settings', settings);
+      if (response.status === 200) {
+        setError('Settings updated successfully');
+      } else {
+        throw new Error('Unexpected response status');
+      }
     } catch (error) {
       console.error('Error updating settings:', error);
-      setError('Failed to update settings. Please try again.');
+      setError('Failed to update settings. Please check your connection and try again.');
     }
   };
 
