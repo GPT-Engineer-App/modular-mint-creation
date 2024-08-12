@@ -24,9 +24,9 @@ const ObjectDetection = () => {
     loadModel();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = videoRef.current.srcObject.getTracks();
-        tracks.forEach(track => track.stop());
+      stopWebcam();
+      if (detectionInterval) {
+        clearInterval(detectionInterval);
       }
     };
   }, []);
@@ -59,7 +59,7 @@ const ObjectDetection = () => {
   const stopWebcam = () => {
     const video = videoRef.current;
 
-    if (video) {
+    if (video && video.srcObject) {
       const stream = video.srcObject;
       const tracks = stream.getTracks();
 
@@ -68,8 +68,10 @@ const ObjectDetection = () => {
       });
 
       video.srcObject = null;
-      setPredictions([])
-      setIsWebcamStarted(false)
+      setPredictions([]);
+      setIsWebcamStarted(false);
+    } else {
+      setIsWebcamStarted(false);
     }
   };
 
