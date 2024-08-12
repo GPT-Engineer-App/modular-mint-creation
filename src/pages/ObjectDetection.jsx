@@ -9,6 +9,14 @@ import { useLocation } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { CameraIcon, LockIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest',
+  },
+});
 
 const ObjectDetection = () => {
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
@@ -22,6 +30,12 @@ const ObjectDetection = () => {
   const [isPortrait, setIsPortrait] = useState(false);
   const [lockedObject, setLockedObject] = useState(null);
   const [selectedClasses, setSelectedClasses] = useState(['plastic bottles', 'aluminium cans', 'cardboard', 'milk cartons']);
+  const [settings, setSettings] = useState({
+    alertThreshold: 5,
+    detectionSensitivity: 0.5,
+    alertThresholdEnabled: true,
+    detectionSensitivityEnabled: true,
+  });
   const location = useLocation();
   const videoRef = useRef(null);
   const modelRef = useRef(null);
@@ -32,6 +46,17 @@ const ObjectDetection = () => {
     setObjectCounts(savedCounts);
     const savedHistoricalData = JSON.parse(localStorage.getItem('historicalData')) || [];
     setHistoricalData(savedHistoricalData);
+
+    // Fetch settings
+    const fetchSettings = async () => {
+      try {
+        const response = await api.get('/settings');
+        setSettings(response.data);
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      }
+    };
+    fetchSettings();
   }, []);
 
   useEffect(() => {
@@ -155,14 +180,14 @@ const ObjectDetection = () => {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       // Draw the counting line
-      const linePosition = canvas.width * (linePosition / 100);
+      const linePos = canvas.width * (linePosition / 100);
       ctx.beginPath();
       if (isPortrait) {
-        ctx.moveTo(0, linePosition);
-        ctx.lineTo(canvas.width, linePosition);
+        ctx.moveTo(0, linePos);
+        ctx.lineTo(canvas.width, linePos);
       } else {
-        ctx.moveTo(linePosition, 0);
-        ctx.lineTo(linePosition, canvas.height);
+        ctx.moveTo(linePos, 0);
+        ctx.lineTo(linePos, canvas.height);
       }
       ctx.strokeStyle = 'red';
       ctx.lineWidth = 2;
@@ -173,8 +198,12 @@ const ObjectDetection = () => {
       ctx.font = '14px Arial';
       ctx.fillText(`Line: ${linePosition}%`, 10, 20);
 
-      // Perform object detection
-      const predictions = await modelRef.current.detect(canvas);
+      // Perform object detection only if detection sensitivity is enabled
+      let predictions = [];
+      if (settings.detectionSensitivityEnabled) {
+        predictions = await modelRef.current.detect(canvas);
+        predictions = predictions.filter(pred => pred.score >= settings.detectionSensitivity);
+      }
       setPredictions(predictions);
 
       const newTrackedObjects = { ...trackedObjects };
@@ -200,12 +229,13 @@ const ObjectDetection = () => {
         ctx.fillText(`${objectClass} - ${Math.round(score * 100)}%`, x, y > 10 ? y - 5 : 10);
 
         if (isLocked) {
-          ctx.drawImage(LockIcon, x + width - 20, y, 20, 20);
+          ctx.fillStyle = '#FF0000';
+          ctx.fillText('🔒', x + width - 20, y + 20);
         }
 
         if (newTrackedObjects[objectId]) {
           const prevCenter = newTrackedObjects[objectId].center;
-          if ((prevCenter <= linePosition && objectCenter > linePosition) || (prevCenter >= linePosition && objectCenter < linePosition)) {
+          if ((prevCenter <= linePos && objectCenter > linePos) || (prevCenter >= linePos && objectCenter < linePos)) {
             counts[objectClass] = (counts[objectClass] || 0) + 1;
           }
           newTrackedObjects[objectId] = { 
@@ -264,6 +294,15 @@ const ObjectDetection = () => {
           localStorage.setItem('historicalData', JSON.stringify(newData.slice(-60))); // Keep last 60 data points
           return newData.slice(-60);
         });
+      }
+
+      // Check if alert threshold is reached
+      if (settings.alertThresholdEnabled) {
+        const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
+        if (totalCount >= settings.alertThreshold) {
+          console.log(`Alert: Threshold of ${settings.alertThreshold} objects crossed!`);
+          // Here you can implement additional alert logic, like showing a notification
+        }
       }
     } catch (err) {
       console.error(err);
