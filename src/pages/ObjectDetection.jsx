@@ -61,8 +61,12 @@ const ObjectDetection = () => {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
           videoRef.current.play();
-          canvasRef.current.width = videoRef.current.videoWidth;
-          canvasRef.current.height = videoRef.current.videoHeight;
+        };
+        videoRef.current.onloadeddata = () => {
+          if (canvasRef.current) {
+            canvasRef.current.width = videoRef.current.videoWidth;
+            canvasRef.current.height = videoRef.current.videoHeight;
+          }
         };
       }
     } catch (error) {
@@ -92,11 +96,17 @@ const ObjectDetection = () => {
     if (!modelRef.current || !videoRef.current || !canvasRef.current) return;
 
     try {
+      const video = videoRef.current;
+      if (video.readyState !== 4 || video.videoWidth === 0 || video.videoHeight === 0) {
+        console.log('Video not ready yet');
+        return;
+      }
+
       const ctx = canvasRef.current.getContext('2d');
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.drawImage(videoRef.current, 0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.drawImage(video, 0, 0, ctx.canvas.width, ctx.canvas.height);
 
-      const predictions = await modelRef.current.detect(videoRef.current);
+      const predictions = await modelRef.current.detect(ctx.canvas);
       setPredictions(predictions);
 
       const counts = {};
