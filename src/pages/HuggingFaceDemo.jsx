@@ -10,11 +10,13 @@ const HuggingFaceDemo = () => {
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setImageUrl(input);
 
     try {
       const client = await Client.connect("janasumit2911/BottlesCansClassify");
@@ -52,14 +54,22 @@ const HuggingFaceDemo = () => {
           {error && (
             <div className="mt-4 text-red-500">{error}</div>
           )}
+          {imageUrl && (
+            <div className="mt-4">
+              <h2 className="text-xl font-semibold mb-2">Input Image:</h2>
+              <img src={imageUrl} alt="Input" className="mx-auto object-cover max-w-full h-auto" />
+            </div>
+          )}
           {response && (
             <div className="mt-4">
               <h2 className="text-xl font-semibold mb-2">Classification Result:</h2>
+              <p className="mb-2">The model has classified the image. Here's the raw output:</p>
               <Textarea
                 value={response}
                 readOnly
                 className="w-full h-40"
               />
+              <p className="mt-2">This output contains the model's predictions, including the detected object classes and their confidence scores.</p>
             </div>
           )}
         </CardContent>
