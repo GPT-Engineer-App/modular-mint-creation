@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Client } from "@gradio/client";
 
 const HuggingFaceDemo = () => {
   const [input, setInput] = useState('');
-  const [response, setResponse] = useState('');
+  const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -20,10 +19,8 @@ const HuggingFaceDemo = () => {
 
     try {
       const client = await Client.connect("janasumit2911/BottlesCansClassify");
-      const result = await client.predict("/predict", { 		
-        params: input, 
-      });
-      setResponse(JSON.stringify(result.data, null, 2));
+      const result = await client.predict("/predict", [input]);
+      setResponse(result.data);
     } catch (error) {
       console.error('Error:', error);
       setError('An error occurred while processing your request. Please try again.');
@@ -63,13 +60,14 @@ const HuggingFaceDemo = () => {
           {response && (
             <div className="mt-4">
               <h2 className="text-xl font-semibold mb-2">Classification Result:</h2>
-              <p className="mb-2">The model has classified the image. Here's the raw output:</p>
-              <Textarea
-                value={response}
-                readOnly
-                className="w-full h-40"
-              />
-              <p className="mt-2">This output contains the model's predictions, including the detected object classes and their confidence scores.</p>
+              <p className="mb-2">The model has classified the image as:</p>
+              <ul className="list-disc list-inside">
+                {response.map((item, index) => (
+                  <li key={index} className="mb-1">
+                    <span className="font-semibold">{item.label}</span>: {(item.confidence * 100).toFixed(2)}% confidence
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </CardContent>
