@@ -38,7 +38,7 @@ const Login = () => {
   }, [email, password, login, signup, navigate]);
 
   const handleBackdoorEntry = useCallback(() => {
-    navigate('/');
+    navigate('/', { replace: true });
   }, [navigate]);
 
   return (
@@ -62,7 +62,7 @@ const Login = () => {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleBackdoorEntry}>Continue</AlertDialogAction>
+                <AlertDialogAction onClick={handleBackdoorEntry}>OK</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
