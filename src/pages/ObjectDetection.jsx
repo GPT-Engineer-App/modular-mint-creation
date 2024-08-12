@@ -139,26 +139,24 @@ const ObjectDetection = () => {
 
     try {
       const video = videoRef.current;
-      if (video.readyState !== 4 || video.videoWidth === 0 || video.videoHeight === 0) {
-        console.log('Video not ready yet');
-        return;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+
+      // Ensure canvas dimensions match video dimensions
+      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
       }
 
-      const ctx = canvasRef.current.getContext('2d');
-      
-      // Ensure canvas dimensions match video dimensions
-      if (canvasRef.current.width !== video.videoWidth || canvasRef.current.height !== video.videoHeight) {
-        canvasRef.current.width = video.videoWidth;
-        canvasRef.current.height = video.videoHeight;
-      }
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.drawImage(video, 0, 0, ctx.canvas.width, ctx.canvas.height);
+      // Clear the canvas and draw the video frame
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       // Draw the counting line
-      const lineY = ctx.canvas.height * (linePosition / 100);
+      const lineY = canvas.height * (linePosition / 100);
       ctx.beginPath();
       ctx.moveTo(0, lineY);
-      ctx.lineTo(ctx.canvas.width, lineY);
+      ctx.lineTo(canvas.width, lineY);
       ctx.strokeStyle = 'red';
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -168,7 +166,8 @@ const ObjectDetection = () => {
       ctx.font = '14px Arial';
       ctx.fillText(`Line: ${linePosition}%`, 10, lineY - 5);
 
-      const predictions = await modelRef.current.detect(ctx.canvas);
+      // Perform object detection
+      const predictions = await modelRef.current.detect(canvas);
       setPredictions(predictions);
 
       const newTrackedObjects = { ...trackedObjects };
@@ -290,7 +289,7 @@ const ObjectDetection = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center space-y-4">
-            <div className="relative">
+            <div className="relative w-full max-w-2xl">
               <video
                 ref={videoRef}
                 className="absolute top-0 left-0 w-full h-full"
@@ -300,7 +299,7 @@ const ObjectDetection = () => {
               />
               <canvas
                 ref={canvasRef}
-                className="w-full max-w-2xl"
+                className="w-full h-full"
                 onClick={handleCanvasClick}
               />
             </div>
@@ -317,7 +316,7 @@ const ObjectDetection = () => {
                 onValueChange={(value) => setLinePosition(value[0])}
               />
             </div>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap justify-center gap-4">
               <Button onClick={isWebcamStarted ? stopWebcam : startWebcam}>
                 {isWebcamStarted ? "Stop" : "Start"} Webcam
               </Button>
