@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Slider } from "@/components/ui/slider";
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { useLocation } from 'react-router-dom';
@@ -16,6 +17,7 @@ const ObjectDetection = () => {
   const [historicalData, setHistoricalData] = useState([]);
   const [trackedObjects, setTrackedObjects] = useState({});
   const [facingMode, setFacingMode] = useState('environment');
+  const [linePosition, setLinePosition] = useState(50); // 50% of the height
   const location = useLocation();
   const videoRef = useRef(null);
   const modelRef = useRef(null);
@@ -149,6 +151,15 @@ const ObjectDetection = () => {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       ctx.drawImage(video, 0, 0, ctx.canvas.width, ctx.canvas.height);
 
+      // Draw the counting line
+      const lineY = ctx.canvas.height * (linePosition / 100);
+      ctx.beginPath();
+      ctx.moveTo(0, lineY);
+      ctx.lineTo(ctx.canvas.width, lineY);
+      ctx.strokeStyle = 'red';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
       const predictions = await modelRef.current.detect(ctx.canvas);
       setPredictions(predictions);
 
@@ -159,6 +170,7 @@ const ObjectDetection = () => {
         const { class: objectClass, bbox, score } = prediction;
         const [x, y, width, height] = bbox;
         const objectId = `${objectClass}_${Math.round(x)}_${Math.round(y)}`;
+        const objectBottom = y + height;
 
         ctx.strokeStyle = '#00FFFF';
         ctx.lineWidth = 4;
@@ -168,9 +180,14 @@ const ObjectDetection = () => {
         ctx.font = '18px Arial';
         ctx.fillText(`${objectClass} - ${Math.round(score * 100)}%`, x, y > 10 ? y - 5 : 10);
 
-        if (!newTrackedObjects[objectId]) {
-          newTrackedObjects[objectId] = { class: objectClass, lastSeen: Date.now() };
-          counts[objectClass] = (counts[objectClass] || 0) + 1;
+        if (newTrackedObjects[objectId]) {
+          const prevBottom = newTrackedObjects[objectId].bottom;
+          if (prevBottom <= lineY && objectBottom > lineY) {
+            counts[objectClass] = (counts[objectClass] || 0) + 1;
+          }
+          newTrackedObjects[objectId] = { class: objectClass, bottom: objectBottom, lastSeen: Date.now() };
+        } else {
+          newTrackedObjects[objectId] = { class: objectClass, bottom: objectBottom, lastSeen: Date.now() };
         }
       });
 
@@ -227,6 +244,19 @@ const ObjectDetection = () => {
               <canvas
                 ref={canvasRef}
                 className="w-full max-w-2xl"
+              />
+            </div>
+            <div className="w-full max-w-2xl">
+              <label htmlFor="line-position" className="block text-sm font-medium text-gray-700 mb-2">
+                Counting Line Position
+              </label>
+              <Slider
+                id="line-position"
+                min={0}
+                max={100}
+                step={1}
+                value={[linePosition]}
+                onValueChange={(value) => setLinePosition(value[0])}
               />
             </div>
             <div className="flex space-x-4">
