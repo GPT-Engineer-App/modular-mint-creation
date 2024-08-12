@@ -13,7 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login, signup } = useAuth();
+  const { login, signup, setIsAuthenticated } = useAuth();
 
   const handleSubmit = useCallback(async (e, isSignup = false) => {
     e.preventDefault();
@@ -38,8 +38,9 @@ const Login = () => {
   }, [email, password, login, signup, navigate]);
 
   const handleBackdoorEntry = useCallback(() => {
+    setIsAuthenticated(true);
     navigate('/', { replace: true });
-  }, [navigate]);
+  }, [navigate, setIsAuthenticated]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -49,23 +50,13 @@ const Login = () => {
         </CardHeader>
         <CardContent>
           {/* Backdoor Entry Button */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" className="w-full mb-4">Backdoor Entry (Development Only)</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This backdoor is for development purposes only. Make sure to remove it before production deployment.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleBackdoorEntry}>OK</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button 
+            variant="outline" 
+            className="w-full mb-4" 
+            onClick={handleBackdoorEntry}
+          >
+            Backdoor Entry (Development Only)
+          </Button>
           <Tabs defaultValue="login">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
