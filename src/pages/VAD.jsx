@@ -1,13 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const VAD = () => {
-  const [isRecording, setIsRecording] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceDetected, setVoiceDetected] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const canvasRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
+  const sourceRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const animationFrameRef = useRef(null);
 
@@ -20,13 +23,14 @@ const VAD = () => {
     };
   }, []);
 
-  const startRecording = async () => {
+  const startListening = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
       analyserRef.current = audioContextRef.current.createAnalyser();
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      source.connect(analyserRef.current);
+      analyserRef.current.fftSize = 2048;
+      sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+      sourceRef.current.connect(analyserRef.current);
 
       mediaRecorderRef.current = new MediaRecorder(stream);
       const chunks = [];
@@ -37,62 +41,70 @@ const VAD = () => {
       };
 
       mediaRecorderRef.current.start();
-      setIsRecording(true);
-      drawWaveform();
+      setIsListening(true);
+      detectVoiceActivity();
     } catch (error) {
       console.error('Error accessing microphone:', error);
     }
   };
 
-  const stopRecording = () => {
+  const stopListening = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
+      setIsListening(false);
       cancelAnimationFrame(animationFrameRef.current);
+      sourceRef.current.disconnect();
     }
   };
 
-  const drawWaveform = () => {
+  const detectVoiceActivity = () => {
+    const bufferLength = analyserRef.current.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const detectVoice = () => {
+      animationFrameRef.current = requestAnimationFrame(detectVoice);
+      analyserRef.current.getByteFrequencyData(dataArray);
+
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+      const isVoice = average > 30; // Adjust this threshold as needed
+
+      setVoiceDetected(isVoice);
+      drawWaveform(dataArray);
+    };
+
+    detectVoice();
+  };
+
+  const drawWaveform = (dataArray) => {
     const canvas = canvasRef.current;
     const canvasCtx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-    const bufferLength = analyserRef.current.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
 
-    canvasCtx.clearRect(0, 0, width, height);
+    canvasCtx.fillStyle = 'rgb(200, 200, 200)';
+    canvasCtx.fillRect(0, 0, width, height);
+    canvasCtx.lineWidth = 2;
+    canvasCtx.strokeStyle = voiceDetected ? 'rgb(0, 255, 0)' : 'rgb(0, 0, 0)';
+    canvasCtx.beginPath();
 
-    const draw = () => {
-      animationFrameRef.current = requestAnimationFrame(draw);
-      analyserRef.current.getByteTimeDomainData(dataArray);
+    const sliceWidth = width * 1.0 / dataArray.length;
+    let x = 0;
 
-      canvasCtx.fillStyle = 'rgb(200, 200, 200)';
-      canvasCtx.fillRect(0, 0, width, height);
-      canvasCtx.lineWidth = 2;
-      canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
-      canvasCtx.beginPath();
+    for (let i = 0; i < dataArray.length; i++) {
+      const v = dataArray[i] / 128.0;
+      const y = v * height / 2;
 
-      const sliceWidth = width * 1.0 / bufferLength;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = v * height / 2;
-
-        if (i === 0) {
-          canvasCtx.moveTo(x, y);
-        } else {
-          canvasCtx.lineTo(x, y);
-        }
-
-        x += sliceWidth;
+      if (i === 0) {
+        canvasCtx.moveTo(x, y);
+      } else {
+        canvasCtx.lineTo(x, y);
       }
 
-      canvasCtx.lineTo(canvas.width, canvas.height / 2);
-      canvasCtx.stroke();
-    };
+      x += sliceWidth;
+    }
 
-    draw();
+    canvasCtx.lineTo(canvas.width, canvas.height / 2);
+    canvasCtx.stroke();
   };
 
   return (
@@ -100,17 +112,17 @@ const VAD = () => {
       <h1 className="text-2xl font-bold mb-4">Voice Activity Detection</h1>
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Audio Recorder</CardTitle>
+          <CardTitle>Voice Activity Detector</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center space-y-4">
             <canvas ref={canvasRef} width="600" height="200" className="border border-gray-300"></canvas>
             <div className="flex space-x-4">
-              <Button onClick={startRecording} disabled={isRecording}>
-                Start Recording
+              <Button onClick={startListening} disabled={isListening}>
+                Start Listening
               </Button>
-              <Button onClick={stopRecording} disabled={!isRecording}>
-                Stop Recording
+              <Button onClick={stopListening} disabled={!isListening}>
+                Stop Listening
               </Button>
             </div>
             {audioUrl && (
@@ -126,7 +138,11 @@ const VAD = () => {
           <CardTitle>VAD Results</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>VAD results will be displayed here.</p>
+          <Alert variant={voiceDetected ? "default" : "destructive"}>
+            <AlertDescription>
+              {voiceDetected ? "Voice activity detected!" : "No voice activity detected."}
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     </div>
