@@ -37,6 +37,9 @@ const VAD = () => {
 
   const startListening = async () => {
     try {
+      if (audioContextRef.current) {
+        await audioContextRef.current.close();
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
       analyserRef.current = audioContextRef.current.createAnalyser();
@@ -78,19 +81,27 @@ const VAD = () => {
     const bufferLength = analyserRef.current.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
+    let voiceDetectedCount = 0;
     const detectVoice = () => {
+      if (!isListening) return;
       animationFrameRef.current = requestAnimationFrame(detectVoice);
       analyserRef.current.getByteFrequencyData(dataArray);
 
       const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
       const isVoice = average > 30; // Adjust this threshold as needed
 
-      setVoiceDetected(isVoice);
-      drawWaveform(dataArray);
-
       if (isVoice) {
-        recognizeCommand();
+        voiceDetectedCount++;
+        if (voiceDetectedCount >= 5) { // Require 5 consecutive detections
+          setVoiceDetected(true);
+          recognizeCommand();
+        }
+      } else {
+        voiceDetectedCount = 0;
+        setVoiceDetected(false);
       }
+
+      drawWaveform(dataArray);
     };
 
     detectVoice();

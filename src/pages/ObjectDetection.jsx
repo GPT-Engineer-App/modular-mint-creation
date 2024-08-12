@@ -6,6 +6,7 @@ import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { useLocation } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { CameraIcon } from 'lucide-react';
 
 const ObjectDetection = () => {
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
@@ -14,6 +15,7 @@ const ObjectDetection = () => {
   const [objectCounts, setObjectCounts] = useState({});
   const [historicalData, setHistoricalData] = useState([]);
   const [trackedObjects, setTrackedObjects] = useState({});
+  const [facingMode, setFacingMode] = useState('environment');
   const location = useLocation();
   const videoRef = useRef(null);
   const modelRef = useRef(null);
@@ -66,7 +68,12 @@ const ObjectDetection = () => {
   const startWebcam = async () => {
     try {
       setIsWebcamStarted(true)
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const constraints = {
+        video: {
+          facingMode: facingMode
+        }
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -83,6 +90,14 @@ const ObjectDetection = () => {
     } catch (error) {
       setIsWebcamStarted(false)
       console.error('Error accessing webcam:', error);
+    }
+  };
+
+  const switchCamera = () => {
+    setFacingMode(prevMode => prevMode === 'user' ? 'environment' : 'user');
+    if (isWebcamStarted) {
+      stopWebcam();
+      setTimeout(() => startWebcam(), 100);
     }
   };
 
@@ -220,6 +235,9 @@ const ObjectDetection = () => {
               </Button>
               <Button onClick={resetCounts}>
                 Reset Counts
+              </Button>
+              <Button onClick={switchCamera}>
+                <CameraIcon className="mr-2 h-4 w-4" /> Switch Camera
               </Button>
             </div>
           </div>
