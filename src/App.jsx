@@ -47,32 +47,33 @@ const App = () => {
   }, []);
 
   return (
-  <AuthProvider>
-    <QueryClientProvider client={queryClient}>
-      <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <React.Suspense fallback={<div>Loading...</div>}>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                  <Route index element={<Index />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/statistics" element={<Statistics />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/object-detection" element={<React.Suspense fallback={<div>Loading Object Detection...</div>}><ObjectDetection /></React.Suspense>} />
-                  <Route path="/engine-labs" element={<React.Suspense fallback={<div>Loading Engine Labs AI...</div>}><EngineLabs /></React.Suspense>} />
-                  <Route path="/vad" element={<React.Suspense fallback={<div>Loading VAD...</div>}><VAD /></React.Suspense>} />
-                  <Route path="/huggingface" element={<React.Suspense fallback={<div>Loading Hugging Face Demo...</div>}><HuggingFaceDemo /></React.Suspense>} />
-                </Route>
-              </Routes>
-            </React.Suspense>
-          </BrowserRouter>
-        </TooltipProvider>
-      </NextThemesProvider>
-    </QueryClientProvider>
-  </AuthProvider>
-);
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <Toaster />
+            <BrowserRouter>
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                    <Route index element={<Index />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/statistics" element={<Statistics />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/object-detection" element={<React.Suspense fallback={<div>Loading Object Detection...</div>}><ObjectDetection /></React.Suspense>} />
+                    <Route path="/engine-labs" element={<React.Suspense fallback={<div>Loading Engine Labs AI...</div>}><EngineLabs /></React.Suspense>} />
+                    <Route path="/vad" element={<React.Suspense fallback={<div>Loading VAD...</div>}><VAD /></React.Suspense>} />
+                    <Route path="/huggingface" element={<React.Suspense fallback={<div>Loading Hugging Face Demo...</div>}><HuggingFaceDemo /></React.Suspense>} />
+                  </Route>
+                </Routes>
+              </React.Suspense>
+            </BrowserRouter>
+          </TooltipProvider>
+        </NextThemesProvider>
+      </QueryClientProvider>
+    </AuthProvider>
+  );
+};
 
 export default App;
