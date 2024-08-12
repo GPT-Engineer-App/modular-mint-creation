@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import { toPng } from 'html-to-image';
 
 const ObjectDetection = () => {
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
@@ -98,6 +99,14 @@ const ObjectDetection = () => {
       });
 
       setObjectCounts(counts);
+
+      // Capture the canvas as an image
+      try {
+        const dataUrl = await toPng(canvasRef.current, { quality: 0.95 });
+        console.log('Captured image:', dataUrl);
+      } catch (error) {
+        console.error('Error capturing image:', error);
+      }
     } catch (err) {
       console.error(err);
     }
