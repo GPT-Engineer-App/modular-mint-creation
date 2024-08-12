@@ -7,7 +7,7 @@ import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { useLocation } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { CameraIcon } from 'lucide-react';
+import { CameraIcon, LockIcon } from 'lucide-react';
 
 const ObjectDetection = () => {
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
@@ -18,6 +18,7 @@ const ObjectDetection = () => {
   const [trackedObjects, setTrackedObjects] = useState({});
   const [facingMode, setFacingMode] = useState('environment');
   const [linePosition, setLinePosition] = useState(50); // 50% of the height
+  const [lockedObject, setLockedObject] = useState(null);
   const location = useLocation();
   const videoRef = useRef(null);
   const modelRef = useRef(null);
@@ -172,24 +173,52 @@ const ObjectDetection = () => {
         const objectId = `${objectClass}_${Math.round(x)}_${Math.round(y)}`;
         const objectBottom = y + height;
 
-        ctx.strokeStyle = '#00FFFF';
+        const isLocked = lockedObject && lockedObject.id === objectId;
+        ctx.strokeStyle = isLocked ? '#FF0000' : '#00FFFF';
         ctx.lineWidth = 4;
         ctx.strokeRect(x, y, width, height);
 
-        ctx.fillStyle = '#00FFFF';
+        ctx.fillStyle = isLocked ? '#FF0000' : '#00FFFF';
         ctx.font = '18px Arial';
         ctx.fillText(`${objectClass} - ${Math.round(score * 100)}%`, x, y > 10 ? y - 5 : 10);
+
+        if (isLocked) {
+          ctx.drawImage(LockIcon, x + width - 20, y, 20, 20);
+        }
 
         if (newTrackedObjects[objectId]) {
           const prevBottom = newTrackedObjects[objectId].bottom;
           if (prevBottom <= lineY && objectBottom > lineY) {
             counts[objectClass] = (counts[objectClass] || 0) + 1;
           }
-          newTrackedObjects[objectId] = { class: objectClass, bottom: objectBottom, lastSeen: Date.now() };
+          newTrackedObjects[objectId] = { 
+            class: objectClass, 
+            bottom: objectBottom, 
+            lastSeen: Date.now(),
+            bbox: [x, y, width, height]
+          };
         } else {
-          newTrackedObjects[objectId] = { class: objectClass, bottom: objectBottom, lastSeen: Date.now() };
+          newTrackedObjects[objectId] = { 
+            class: objectClass, 
+            bottom: objectBottom, 
+            lastSeen: Date.now(),
+            bbox: [x, y, width, height]
+          };
         }
       });
+
+      // Update locked object position if it's still visible
+      if (lockedObject) {
+        const updatedObject = newTrackedObjects[lockedObject.id];
+        if (updatedObject) {
+          setLockedObject({
+            ...lockedObject,
+            bbox: updatedObject.bbox
+          });
+        } else {
+          setLockedObject(null);
+        }
+      }
 
       // Remove objects that haven't been seen for more than 5 seconds
       const now = Date.now();
@@ -224,6 +253,23 @@ const ObjectDetection = () => {
     }
   };
 
+  const handleCanvasClick = (event) => {
+    if (!canvasRef.current) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    // Check if click is on an object
+    for (const [id, obj] of Object.entries(trackedObjects)) {
+      const [objX, objY, objWidth, objHeight] = obj.bbox;
+      if (x >= objX && x <= objX + objWidth && y >= objY && y <= objY + objHeight) {
+        setLockedObject(lockedObject && lockedObject.id === id ? null : { id, ...obj });
+        break;
+      }
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Real-time Object Detection and Counting</h1>
@@ -244,6 +290,7 @@ const ObjectDetection = () => {
               <canvas
                 ref={canvasRef}
                 className="w-full max-w-2xl"
+                onClick={handleCanvasClick}
               />
             </div>
             <div className="w-full max-w-2xl">
