@@ -94,5 +94,4 @@ export const useAuth = () => {
   return context;
 };
 
-export { AuthProvider };
 export default useAuth;
