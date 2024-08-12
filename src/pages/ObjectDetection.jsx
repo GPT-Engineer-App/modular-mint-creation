@@ -8,6 +8,7 @@ import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { useLocation } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { CameraIcon, LockIcon } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ObjectDetection = () => {
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
@@ -19,6 +20,7 @@ const ObjectDetection = () => {
   const [facingMode, setFacingMode] = useState('environment');
   const [linePosition, setLinePosition] = useState(50); // 50% of the height
   const [lockedObject, setLockedObject] = useState(null);
+  const [selectedClasses, setSelectedClasses] = useState(['all']);
   const location = useLocation();
   const videoRef = useRef(null);
   const modelRef = useRef(null);
@@ -167,11 +169,15 @@ const ObjectDetection = () => {
       const newTrackedObjects = { ...trackedObjects };
       const counts = {};
 
-      predictions.forEach(prediction => {
+      const filteredPredictions = selectedClasses.includes('all')
+        ? predictions
+        : predictions.filter(prediction => selectedClasses.includes(prediction.class));
+
+      filteredPredictions.forEach(prediction => {
         const { class: objectClass, bbox, score } = prediction;
         const [x, y, width, height] = bbox;
         const objectId = `${objectClass}_${Math.round(x)}_${Math.round(y)}`;
-        const objectBottom = y + height;
+        const objectCenter = y + height / 2;
 
         const isLocked = lockedObject && lockedObject.id === objectId;
         ctx.strokeStyle = isLocked ? '#FF0000' : '#00FFFF';
@@ -187,20 +193,20 @@ const ObjectDetection = () => {
         }
 
         if (newTrackedObjects[objectId]) {
-          const prevBottom = newTrackedObjects[objectId].bottom;
-          if (prevBottom <= lineY && objectBottom > lineY) {
+          const prevCenter = newTrackedObjects[objectId].center;
+          if ((prevCenter <= lineY && objectCenter > lineY) || (prevCenter >= lineY && objectCenter < lineY)) {
             counts[objectClass] = (counts[objectClass] || 0) + 1;
           }
           newTrackedObjects[objectId] = { 
             class: objectClass, 
-            bottom: objectBottom, 
+            center: objectCenter, 
             lastSeen: Date.now(),
             bbox: [x, y, width, height]
           };
         } else {
           newTrackedObjects[objectId] = { 
             class: objectClass, 
-            bottom: objectBottom, 
+            center: objectCenter, 
             lastSeen: Date.now(),
             bbox: [x, y, width, height]
           };
@@ -316,6 +322,30 @@ const ObjectDetection = () => {
               <Button onClick={switchCamera}>
                 <CameraIcon className="mr-2 h-4 w-4" /> Switch Camera
               </Button>
+            </div>
+            <div className="w-full max-w-2xl">
+              <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-2">
+                Select Classes to Count
+              </label>
+              <Select
+                id="class-select"
+                value={selectedClasses}
+                onValueChange={setSelectedClasses}
+                multiple
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select classes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  <SelectItem value="person">Person</SelectItem>
+                  <SelectItem value="car">Car</SelectItem>
+                  <SelectItem value="truck">Truck</SelectItem>
+                  <SelectItem value="bicycle">Bicycle</SelectItem>
+                  <SelectItem value="motorcycle">Motorcycle</SelectItem>
+                  {/* Add more classes as needed */}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
