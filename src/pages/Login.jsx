@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from '@/hooks/useAuth.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -41,6 +42,15 @@ const Login = () => {
     setIsAuthenticated(true);
     navigate('/', { replace: true });
   }, [navigate, setIsAuthenticated]);
+
+  useEffect(() => {
+    // Clean up any potential window references
+    return () => {
+      if (window.opener && !window.opener.closed) {
+        window.opener = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
