@@ -18,9 +18,9 @@ const ObjectDetection = () => {
   const [historicalData, setHistoricalData] = useState([]);
   const [trackedObjects, setTrackedObjects] = useState({});
   const [facingMode, setFacingMode] = useState('environment');
-  const [linePosition, setLinePosition] = useState(50); // 50% of the height
+  const [linePosition, setLinePosition] = useState(50);
   const [lockedObject, setLockedObject] = useState(null);
-  const [selectedClasses, setSelectedClasses] = useState(['all']);
+  const [selectedClasses, setSelectedClasses] = useState(['plastic bottles', 'aluminium cans', 'cardboard', 'milk cartons']);
   const location = useLocation();
   const videoRef = useRef(null);
   const modelRef = useRef(null);
@@ -162,6 +162,11 @@ const ObjectDetection = () => {
       ctx.strokeStyle = 'red';
       ctx.lineWidth = 2;
       ctx.stroke();
+
+      // Add text to show line position
+      ctx.fillStyle = 'red';
+      ctx.font = '14px Arial';
+      ctx.fillText(`Line: ${linePosition}%`, 10, lineY - 5);
 
       const predictions = await modelRef.current.detect(ctx.canvas);
       setPredictions(predictions);
@@ -337,13 +342,10 @@ const ObjectDetection = () => {
                   <SelectValue placeholder="Select classes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Classes</SelectItem>
-                  <SelectItem value="person">Person</SelectItem>
-                  <SelectItem value="car">Car</SelectItem>
-                  <SelectItem value="truck">Truck</SelectItem>
-                  <SelectItem value="bicycle">Bicycle</SelectItem>
-                  <SelectItem value="motorcycle">Motorcycle</SelectItem>
-                  {/* Add more classes as needed */}
+                  <SelectItem value="plastic bottles">Plastic Bottles</SelectItem>
+                  <SelectItem value="aluminium cans">Aluminium Cans</SelectItem>
+                  <SelectItem value="cardboard">Cardboard</SelectItem>
+                  <SelectItem value="milk cartons">Milk Cartons</SelectItem>
                 </SelectContent>
               </Select>
             </div>
