@@ -20,6 +20,13 @@ const VAD = () => {
   const recognitionRef = useRef(null);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'rgb(200, 200, 200)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
       if (audioContextRef.current) {
@@ -133,7 +140,11 @@ const VAD = () => {
 
   const drawWaveform = (dataArray) => {
     const canvas = canvasRef.current;
+    if (!canvas) return;  // Exit if canvas is not available
+
     const canvasCtx = canvas.getContext('2d');
+    if (!canvasCtx) return;  // Exit if context is not available
+
     const width = canvas.width;
     const height = canvas.height;
 
