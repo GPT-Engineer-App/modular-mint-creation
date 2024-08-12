@@ -65,7 +65,9 @@ const ObjectDetection = () => {
     detectionWorker.postMessage({ type: 'load', modelUrl: '/path/to/your/yolov8.onnx' });
 
     detectionWorker.addEventListener('message', (event) => {
-      if (event.data.type === 'result') {
+      if (event.data.type === 'loaded') {
+        console.log('ONNX model loaded successfully');
+      } else if (event.data.type === 'result') {
         const processedResults = processOnnxResults(event.data.results);
         setPredictions(processedResults);
       } else if (event.data.type === 'error') {
@@ -77,6 +79,18 @@ const ObjectDetection = () => {
       detectionWorker.terminate();
     };
   }, []);
+
+  const processOnnxResults = (results) => {
+    // Implement this function to process the ONNX model output
+    // and return it in a format similar to COCO-SSD output
+    return results.map(result => ({
+      // Map the ONNX output to the expected format
+      // This is just an example, adjust according to your model's output
+      class: result.class,
+      score: result.score,
+      bbox: result.bbox
+    }));
+  };
 
   const runInference = (imageData) => {
     if (!worker) return;
