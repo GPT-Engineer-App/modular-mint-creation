@@ -26,7 +26,13 @@ const Login = () => {
       navigate('/');
     } catch (error) {
       console.error('Authentication failed:', error);
-      setError('Authentication failed. Please try again.');
+      if (error.response) {
+        setError(`Authentication failed: ${error.response.data.message}`);
+      } else if (error.request) {
+        setError('Network error. Please check your internet connection.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     }
   }, [email, password, login, signup, navigate]);
 

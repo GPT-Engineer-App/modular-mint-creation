@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://backengine-nqhbcnzf.fly.dev/api',
+  baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest',
+  },
 });
 
 const Settings = () => {

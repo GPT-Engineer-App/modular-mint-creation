@@ -4,7 +4,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://backengine-nqhbcnzf.fly.dev/api',
+  baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest',
+  },
 });
 
 const Statistics = () => {
