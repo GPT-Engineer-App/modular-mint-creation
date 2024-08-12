@@ -9,6 +9,7 @@ import { useLocation } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { CameraIcon, LockIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlusCircle } from 'lucide-react';
 import axios from 'axios';
 
 const api = axios.create({
@@ -30,6 +31,8 @@ const ObjectDetection = () => {
   const [isPortrait, setIsPortrait] = useState(false);
   const [lockedObject, setLockedObject] = useState(null);
   const [selectedClasses, setSelectedClasses] = useState(['plastic bottles', 'aluminium cans', 'cardboard', 'milk cartons']);
+  const [customClass, setCustomClass] = useState('');
+  const [availableClasses, setAvailableClasses] = useState(['plastic bottles', 'aluminium cans', 'cardboard', 'milk cartons']);
   const [settings, setSettings] = useState({
     alertThreshold: 5,
     detectionSensitivity: 0.5,
@@ -377,22 +380,44 @@ const ObjectDetection = () => {
               <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-2">
                 Select Classes to Count
               </label>
-              <Select
-                id="class-select"
-                value={selectedClasses}
-                onValueChange={setSelectedClasses}
-                multiple
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select classes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="plastic bottles">Plastic Bottles</SelectItem>
-                  <SelectItem value="aluminium cans">Aluminium Cans</SelectItem>
-                  <SelectItem value="cardboard">Cardboard</SelectItem>
-                  <SelectItem value="milk cartons">Milk Cartons</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex space-x-2">
+                <Select
+                  id="class-select"
+                  value={selectedClasses}
+                  onValueChange={setSelectedClasses}
+                  multiple
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select classes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableClasses.map((cls) => (
+                      <SelectItem key={cls} value={cls}>
+                        {cls}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex space-x-2">
+                  <Input
+                    type="text"
+                    placeholder="Add custom class"
+                    value={customClass}
+                    onChange={(e) => setCustomClass(e.target.value)}
+                  />
+                  <Button
+                    onClick={() => {
+                      if (customClass && !availableClasses.includes(customClass)) {
+                        setAvailableClasses([...availableClasses, customClass]);
+                        setSelectedClasses([...selectedClasses, customClass]);
+                        setCustomClass('');
+                      }
+                    }}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
