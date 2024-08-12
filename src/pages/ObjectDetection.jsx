@@ -85,7 +85,8 @@ const ObjectDetection = () => {
     // and return it in a format similar to COCO-SSD output
     return results.map(result => ({
       // Map the ONNX output to the expected format
-      // This is just an example, adjust according to your model's output
+      // This will depend on your specific YOLO v8 model output format
+      // Adjust according to your model's output
       class: result.class,
       score: result.score,
       bbox: result.bbox
@@ -96,12 +97,6 @@ const ObjectDetection = () => {
     if (!worker) return;
 
     worker.postMessage({ type: 'run', imageData });
-  };
-
-  const processOnnxResults = (results) => {
-    // Process ONNX model output and return in a format similar to COCO-SSD output
-    // This will depend on your specific YOLO v8 model output format
-    // You'll need to implement this based on your model's output structure
   };
 
   const onDrop = useCallback((acceptedFiles) => {
