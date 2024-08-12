@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -25,7 +25,28 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    // Add viewport meta tag for mobile responsiveness
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+    document.getElementsByTagName('head')[0].appendChild(meta);
+
+    // Add apple-mobile-web-app-capable meta tag for iOS devices
+    const appleMeta = document.createElement('meta');
+    appleMeta.name = 'apple-mobile-web-app-capable';
+    appleMeta.content = 'yes';
+    document.getElementsByTagName('head')[0].appendChild(appleMeta);
+
+    // Add theme-color meta tag for Android devices
+    const themeMeta = document.createElement('meta');
+    themeMeta.name = 'theme-color';
+    themeMeta.content = '#000000'; // Set this to match your app's theme color
+    document.getElementsByTagName('head')[0].appendChild(themeMeta);
+  }, []);
+
+  return (
   <AuthProvider>
     <QueryClientProvider client={queryClient}>
       <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>

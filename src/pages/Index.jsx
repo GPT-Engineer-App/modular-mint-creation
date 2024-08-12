@@ -5,81 +5,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const Index = () => {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Welcome to AI Dashboard</h1>
-      <p className="text-lg">Explore our various AI-powered features and tools:</p>
+      <h1 className="text-2xl font-bold">Welcome to AI Dashboard</h1>
+      <p className="text-base">Explore our AI-powered features:</p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Koxy AI Chat</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Interact with our AI-powered chatbot using the Koxy API.</p>
-            <Link to="/koxy-ai">
-              <Button className="mt-4">Try Koxy AI</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Voice Activity Detection</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Detect voice activity in real-time audio streams.</p>
-            <Link to="/vad">
-              <Button className="mt-4">Explore VAD</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Hugging Face Models</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Experiment with various AI models from Hugging Face.</p>
-            <Link to="/huggingface">
-              <Button className="mt-4">Try Models</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Object Detection</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Detect and classify objects in images and video streams.</p>
-            <Link to="/object-detection">
-              <Button className="mt-4">Detect Objects</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Dashboard</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>View analytics and statistics for your AI applications.</p>
-            <Link to="/dashboard">
-              <Button className="mt-4">View Dashboard</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Configure your AI tools and application preferences.</p>
-            <Link to="/settings">
-              <Button className="mt-4">Manage Settings</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[
+          { title: "Koxy AI Chat", description: "Interact with our AI-powered chatbot.", link: "/koxy-ai", icon: <Bot className="h-6 w-6" /> },
+          { title: "Voice Activity Detection", description: "Detect voice in real-time audio.", link: "/vad", icon: <Mic className="h-6 w-6" /> },
+          { title: "Hugging Face Models", description: "Experiment with AI models.", link: "/huggingface", icon: <Brain className="h-6 w-6" /> },
+          { title: "Object Detection", description: "Detect objects in images and video.", link: "/object-detection", icon: <Video className="h-6 w-6" /> },
+          { title: "Dashboard", description: "View AI application analytics.", link: "/dashboard", icon: <BarChart2 className="h-6 w-6" /> },
+          { title: "Settings", description: "Configure AI tools and preferences.", link: "/settings", icon: <Settings className="h-6 w-6" /> },
+        ].map((item, index) => (
+          <Card key={index} className="flex flex-col justify-between">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                {item.icon}
+                <span>{item.title}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm">{item.description}</p>
+              <Link to={item.link}>
+                <Button className="mt-4 w-full">Open</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
