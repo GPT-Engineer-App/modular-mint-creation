@@ -59,6 +59,11 @@ const ObjectDetection = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play();
+          canvasRef.current.width = videoRef.current.videoWidth;
+          canvasRef.current.height = videoRef.current.videoHeight;
+        };
       }
     } catch (error) {
       setIsWebcamStarted(false)
@@ -87,12 +92,12 @@ const ObjectDetection = () => {
     if (!modelRef.current || !videoRef.current || !canvasRef.current) return;
 
     try {
-      const predictions = await modelRef.current.detect(videoRef.current);
-      setPredictions(predictions);
-
       const ctx = canvasRef.current.getContext('2d');
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       ctx.drawImage(videoRef.current, 0, 0, ctx.canvas.width, ctx.canvas.height);
+
+      const predictions = await modelRef.current.detect(videoRef.current);
+      setPredictions(predictions);
 
       const counts = {};
       predictions.forEach(prediction => {
@@ -125,7 +130,7 @@ const ObjectDetection = () => {
             <div className="relative">
               <video
                 ref={videoRef}
-                className="hidden"
+                className="absolute top-0 left-0 w-full h-full"
                 autoPlay
                 muted
                 playsInline
@@ -133,8 +138,6 @@ const ObjectDetection = () => {
               <canvas
                 ref={canvasRef}
                 className="w-full max-w-2xl"
-                width={640}
-                height={480}
               />
             </div>
             <div className="flex space-x-4">
