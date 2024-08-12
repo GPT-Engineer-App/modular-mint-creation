@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import axios from 'axios';
 
 const api = axios.create({
@@ -16,6 +18,8 @@ const Settings = () => {
   const [settings, setSettings] = useState({
     alertThreshold: '',
     detectionSensitivity: '',
+    alertThresholdEnabled: false,
+    detectionSensitivityEnabled: false,
   });
   const [error, setError] = useState(null);
 
@@ -36,6 +40,10 @@ const Settings = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setSettings(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSwitchChange = (name) => {
+    setSettings(prev => ({ ...prev, [name]: !prev[name] }));
   };
 
   const handleSubmit = async (e) => {
@@ -64,36 +72,72 @@ const Settings = () => {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="alertThreshold" className="block text-sm font-medium text-gray-700">
-                Alert Threshold
-              </label>
-              <Input
-                type="number"
-                id="alertThreshold"
-                name="alertThreshold"
-                value={settings.alertThreshold}
-                onChange={handleChange}
-                className="mt-1"
-              />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="alertThresholdEnabled" className="text-sm font-medium text-gray-700">
+                  Enable Alert Threshold
+                </Label>
+                <Switch
+                  id="alertThresholdEnabled"
+                  checked={settings.alertThresholdEnabled}
+                  onCheckedChange={() => handleSwitchChange('alertThresholdEnabled')}
+                />
+              </div>
+              {settings.alertThresholdEnabled && (
+                <div>
+                  <Label htmlFor="alertThreshold" className="block text-sm font-medium text-gray-700">
+                    Alert Threshold
+                  </Label>
+                  <Input
+                    type="number"
+                    id="alertThreshold"
+                    name="alertThreshold"
+                    value={settings.alertThreshold}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                  <p className="mt-2 text-sm text-gray-500">
+                    The alert threshold determines the point at which the system will trigger an alert. 
+                    For example, if set to 5, an alert will be triggered when 5 or more objects are detected.
+                  </p>
+                </div>
+              )}
             </div>
-            <div>
-              <label htmlFor="detectionSensitivity" className="block text-sm font-medium text-gray-700">
-                Detection Sensitivity
-              </label>
-              <Input
-                type="number"
-                id="detectionSensitivity"
-                name="detectionSensitivity"
-                value={settings.detectionSensitivity}
-                onChange={handleChange}
-                className="mt-1"
-              />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="detectionSensitivityEnabled" className="text-sm font-medium text-gray-700">
+                  Enable Detection Sensitivity
+                </Label>
+                <Switch
+                  id="detectionSensitivityEnabled"
+                  checked={settings.detectionSensitivityEnabled}
+                  onCheckedChange={() => handleSwitchChange('detectionSensitivityEnabled')}
+                />
+              </div>
+              {settings.detectionSensitivityEnabled && (
+                <div>
+                  <Label htmlFor="detectionSensitivity" className="block text-sm font-medium text-gray-700">
+                    Detection Sensitivity
+                  </Label>
+                  <Input
+                    type="number"
+                    id="detectionSensitivity"
+                    name="detectionSensitivity"
+                    value={settings.detectionSensitivity}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                  <p className="mt-2 text-sm text-gray-500">
+                    Detection sensitivity adjusts how easily the system detects objects. 
+                    A higher value increases sensitivity, potentially detecting more objects but also increasing false positives. 
+                    A lower value decreases sensitivity, potentially missing some objects but reducing false positives.
+                  </p>
+                </div>
+              )}
             </div>
             <Button type="submit">Save Settings</Button>
           </form>
-          )}
         </CardContent>
       </Card>
     </div>
