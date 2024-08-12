@@ -12,6 +12,7 @@ const ObjectDetection = () => {
   const [detectionInterval, setDetectionInterval] = useState();
   const [objectCounts, setObjectCounts] = useState({});
   const [historicalData, setHistoricalData] = useState([]);
+  const [trackedObjects, setTrackedObjects] = useState({});
   const location = useLocation();
   const videoRef = useRef(null);
   const modelRef = useRef(null);
@@ -124,18 +125,37 @@ const ObjectDetection = () => {
       const predictions = await modelRef.current.detect(ctx.canvas);
       setPredictions(predictions);
 
+      const newTrackedObjects = { ...trackedObjects };
       const counts = {};
+
       predictions.forEach(prediction => {
+        const { class: objectClass, bbox, score } = prediction;
+        const [x, y, width, height] = bbox;
+        const objectId = `${objectClass}_${Math.round(x)}_${Math.round(y)}`;
+
         ctx.strokeStyle = '#00FFFF';
         ctx.lineWidth = 4;
-        ctx.strokeRect(...prediction.bbox);
+        ctx.strokeRect(x, y, width, height);
 
         ctx.fillStyle = '#00FFFF';
         ctx.font = '18px Arial';
-        ctx.fillText(`${prediction.class} - ${Math.round(prediction.score * 100)}%`, prediction.bbox[0], prediction.bbox[1] > 10 ? prediction.bbox[1] - 5 : 10);
+        ctx.fillText(`${objectClass} - ${Math.round(score * 100)}%`, x, y > 10 ? y - 5 : 10);
 
-        counts[prediction.class] = (counts[prediction.class] || 0) + 1;
+        if (!newTrackedObjects[objectId]) {
+          newTrackedObjects[objectId] = { class: objectClass, lastSeen: Date.now() };
+          counts[objectClass] = (counts[objectClass] || 0) + 1;
+        }
       });
+
+      // Remove objects that haven't been seen for more than 5 seconds
+      const now = Date.now();
+      Object.keys(newTrackedObjects).forEach(id => {
+        if (now - newTrackedObjects[id].lastSeen > 5000) {
+          delete newTrackedObjects[id];
+        }
+      });
+
+      setTrackedObjects(newTrackedObjects);
 
       setObjectCounts(prevCounts => {
         const newCounts = { ...prevCounts };
@@ -147,10 +167,10 @@ const ObjectDetection = () => {
       });
 
       // Update historical data every minute
-      const now = new Date();
-      if (now.getSeconds() === 0) {
+      const nowDate = new Date();
+      if (nowDate.getSeconds() === 0) {
         setHistoricalData(prevData => {
-          const newData = [...prevData, { timestamp: now.toISOString(), ...counts }];
+          const newData = [...prevData, { timestamp: nowDate.toISOString(), ...counts }];
           localStorage.setItem('historicalData', JSON.stringify(newData.slice(-60))); // Keep last 60 data points
           return newData.slice(-60);
         });
