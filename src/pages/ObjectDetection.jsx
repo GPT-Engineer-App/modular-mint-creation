@@ -19,6 +19,7 @@ const ObjectDetection = () => {
   const [trackedObjects, setTrackedObjects] = useState({});
   const [facingMode, setFacingMode] = useState('environment');
   const [linePosition, setLinePosition] = useState(50);
+  const [isPortrait, setIsPortrait] = useState(false);
   const [lockedObject, setLockedObject] = useState(null);
   const [selectedClasses, setSelectedClasses] = useState(['plastic bottles', 'aluminium cans', 'cardboard', 'milk cartons']);
   const location = useLocation();
@@ -89,6 +90,7 @@ const ObjectDetection = () => {
           if (canvasRef.current) {
             canvasRef.current.width = videoRef.current.videoWidth;
             canvasRef.current.height = videoRef.current.videoHeight;
+            setIsPortrait(videoRef.current.videoHeight > videoRef.current.videoWidth);
           }
         };
       }
@@ -153,10 +155,15 @@ const ObjectDetection = () => {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       // Draw the counting line
-      const lineY = canvas.height * (linePosition / 100);
+      const linePosition = canvas.width * (linePosition / 100);
       ctx.beginPath();
-      ctx.moveTo(0, lineY);
-      ctx.lineTo(canvas.width, lineY);
+      if (isPortrait) {
+        ctx.moveTo(0, linePosition);
+        ctx.lineTo(canvas.width, linePosition);
+      } else {
+        ctx.moveTo(linePosition, 0);
+        ctx.lineTo(linePosition, canvas.height);
+      }
       ctx.strokeStyle = 'red';
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -164,7 +171,7 @@ const ObjectDetection = () => {
       // Add text to show line position
       ctx.fillStyle = 'red';
       ctx.font = '14px Arial';
-      ctx.fillText(`Line: ${linePosition}%`, 10, lineY - 5);
+      ctx.fillText(`Line: ${linePosition}%`, 10, 20);
 
       // Perform object detection
       const predictions = await modelRef.current.detect(canvas);
@@ -181,7 +188,7 @@ const ObjectDetection = () => {
         const { class: objectClass, bbox, score } = prediction;
         const [x, y, width, height] = bbox;
         const objectId = `${objectClass}_${Math.round(x)}_${Math.round(y)}`;
-        const objectCenter = y + height / 2;
+        const objectCenter = isPortrait ? y + height / 2 : x + width / 2;
 
         const isLocked = lockedObject && lockedObject.id === objectId;
         ctx.strokeStyle = isLocked ? '#FF0000' : '#00FFFF';
@@ -198,7 +205,7 @@ const ObjectDetection = () => {
 
         if (newTrackedObjects[objectId]) {
           const prevCenter = newTrackedObjects[objectId].center;
-          if ((prevCenter <= lineY && objectCenter > lineY) || (prevCenter >= lineY && objectCenter < lineY)) {
+          if ((prevCenter <= linePosition && objectCenter > linePosition) || (prevCenter >= linePosition && objectCenter < linePosition)) {
             counts[objectClass] = (counts[objectClass] || 0) + 1;
           }
           newTrackedObjects[objectId] = { 
