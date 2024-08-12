@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import { useLocation } from 'react-router-dom';
 
 const ObjectDetection = () => {
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
   const [predictions, setPredictions] = useState([]);
   const [detectionInterval, setDetectionInterval] = useState();
   const [objectCounts, setObjectCounts] = useState({});
+  const location = useLocation();
   const videoRef = useRef(null);
   const modelRef = useRef(null);
   const canvasRef = useRef(null);
@@ -30,6 +32,14 @@ const ObjectDetection = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (location.state?.startDetection) {
+      startWebcam();
+    } else if (location.state?.stopDetection) {
+      stopWebcam();
+    }
+  }, [location]);
 
   useEffect(() => {
     if (isWebcamStarted) {

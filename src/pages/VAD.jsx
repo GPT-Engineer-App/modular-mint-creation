@@ -2,11 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate } from 'react-router-dom';
 
 const VAD = () => {
   const [isListening, setIsListening] = useState(false);
   const [voiceDetected, setVoiceDetected] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
+  const [detectedCommand, setDetectedCommand] = useState('');
+  const navigate = useNavigate();
   const canvasRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
@@ -70,9 +73,37 @@ const VAD = () => {
 
       setVoiceDetected(isVoice);
       drawWaveform(dataArray);
+
+      if (isVoice) {
+        recognizeCommand();
+      }
     };
 
     detectVoice();
+  };
+
+  const recognizeCommand = () => {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const command = event.results[0][0].transcript.toLowerCase();
+      setDetectedCommand(command);
+
+      if (command.includes('start count') || command.includes('start detecting')) {
+        navigate('/object-detection', { state: { startDetection: true } });
+      } else if (command.includes('stop count') || command.includes('stop detecting')) {
+        navigate('/object-detection', { state: { stopDetection: true } });
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error', event.error);
+    };
   };
 
   const drawWaveform = (dataArray) => {
@@ -143,6 +174,13 @@ const VAD = () => {
               {voiceDetected ? "Voice activity detected!" : "No voice activity detected."}
             </AlertDescription>
           </Alert>
+          {detectedCommand && (
+            <Alert variant="default" className="mt-4">
+              <AlertDescription>
+                Detected command: {detectedCommand}
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
     </div>
