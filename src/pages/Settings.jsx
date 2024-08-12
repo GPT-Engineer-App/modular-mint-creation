@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import axios from 'axios';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import axios from 'axios';
 
 const api = axios.create({
   baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
@@ -40,12 +40,13 @@ const Settings = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     try {
       await api.put('/settings', settings);
-      alert('Settings updated successfully');
+      setError('Settings updated successfully');
     } catch (error) {
       console.error('Error updating settings:', error);
-      alert('Failed to update settings');
+      setError('Failed to update settings. Please try again.');
     }
   };
 
@@ -53,18 +54,17 @@ const Settings = () => {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Settings</h1>
 
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
       <Card>
         <CardHeader>
           <CardTitle>System Configuration</CardTitle>
         </CardHeader>
         <CardContent>
-          {!error && (
-            <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert variant={error.includes('successfully') ? 'default' : 'destructive'} className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="alertThreshold" className="block text-sm font-medium text-gray-700">
                 Alert Threshold
