@@ -12,7 +12,6 @@ import { PlusCircle } from 'lucide-react';
 import axios from 'axios';
 import Webcam from 'react-webcam';
 import { useDropzone } from 'react-dropzone';
-import * as ort from 'onnxruntime-web';
 
 const api = axios.create({
   baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
@@ -41,19 +40,51 @@ const ObjectDetection = () => {
     alertThresholdEnabled: true,
     detectionSensitivityEnabled: true,
   });
-  const [onnxModel, setOnnxModel] = useState(null);
+  const [worker, setWorker] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const location = useLocation();
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
 
-  const loadOnnxModel = async () => {
-    try {
-      const model = await ort.InferenceSession.create('/path/to/your/yolov8.onnx');
-      setOnnxModel(model);
-    } catch (error) {
-      console.error('Error loading ONNX model:', error);
-    }
+  useEffect(() => {
+    const detectionWorker = new Worker(new URL('../workers/detectionWorker.js', import.meta.url));
+    setWorker(detectionWorker);
+
+    detectionWorker.postMessage({ type: 'load', modelUrl: '/path/to/your/yolov8.onnx' });
+
+    detectionWorker.addEventListener('message', (event) => {
+      if (event.data.type === 'loaded') {
+        console.log('ONNX model loaded successfully');
+      } else if (event.data.type === 'result') {
+        const processedResults = processOnnxResults(event.data.results);
+        setPredictions(processedResults);
+      } else if (event.data.type === 'error') {
+        console.error('Worker error:', event.data.error);
+      }
+    });
+
+    return () => {
+      detectionWorker.terminate();
+    };
+  }, []);
+
+  const processOnnxResults = (results) => {
+    // Implement this function to process the ONNX model output
+    // and return it in a format similar to COCO-SSD output
+    return results.map(result => ({
+      // Map the ONNX output to the expected format
+      // This will depend on your specific YOLO v8 model output format
+      // Adjust according to your model's output
+      class: result.class,
+      score: result.score,
+      bbox: result.bbox
+    }));
+  };
+
+  const runInference = (imageData) => {
+    if (!worker) return;
+
+    worker.postMessage({ type: 'run', imageData });
   };
 
   const [worker, setWorker] = useState(null);
