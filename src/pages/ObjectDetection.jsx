@@ -4,14 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import * as tf from '@tensorflow/tfjs';
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { useLocation } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { CameraIcon, LockIcon } from 'lucide-react';
+import { CameraIcon, LockIcon, Upload } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle } from 'lucide-react';
 import axios from 'axios';
+import Webcam from 'react-webcam';
+import { useDropzone } from 'react-dropzone';
+import * as ort from 'onnxruntime-web';
 
 const api = axios.create({
   baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
@@ -40,10 +41,67 @@ const ObjectDetection = () => {
     alertThresholdEnabled: true,
     detectionSensitivityEnabled: true,
   });
+  const [onnxModel, setOnnxModel] = useState(null);
+  const [uploadedImage, setUploadedImage] = useState(null);
   const location = useLocation();
-  const videoRef = useRef(null);
-  const modelRef = useRef(null);
+  const webcamRef = useRef(null);
   const canvasRef = useRef(null);
+
+  const loadOnnxModel = async () => {
+    try {
+      const model = await ort.InferenceSession.create('/path/to/your/yolov8.onnx');
+      setOnnxModel(model);
+    } catch (error) {
+      console.error('Error loading ONNX model:', error);
+    }
+  };
+
+  const [worker, setWorker] = useState(null);
+
+  useEffect(() => {
+    const detectionWorker = new Worker(new URL('../workers/detectionWorker.js', import.meta.url));
+    setWorker(detectionWorker);
+
+    detectionWorker.postMessage({ type: 'load', modelUrl: '/path/to/your/yolov8.onnx' });
+
+    detectionWorker.addEventListener('message', (event) => {
+      if (event.data.type === 'result') {
+        const processedResults = processOnnxResults(event.data.results);
+        setPredictions(processedResults);
+      } else if (event.data.type === 'error') {
+        console.error('Worker error:', event.data.error);
+      }
+    });
+
+    return () => {
+      detectionWorker.terminate();
+    };
+  }, []);
+
+  const runInference = (imageData) => {
+    if (!worker) return;
+
+    worker.postMessage({ type: 'run', imageData });
+  };
+
+  const processOnnxResults = (results) => {
+    // Process ONNX model output and return in a format similar to COCO-SSD output
+    // This will depend on your specific YOLO v8 model output format
+    // You'll need to implement this based on your model's output structure
+  };
+
+  const onDrop = useCallback((acceptedFiles) => {
+    const file = acceptedFiles[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setUploadedImage(e.target.result);
+      // Run inference on the uploaded image
+      runInference(e.target.result);
+    };
+    reader.readAsArrayBuffer(file);
+  }, []);
+
+  const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
   useEffect(() => {
     const savedCounts = JSON.parse(sessionStorage.getItem('objectCounts')) || {};
@@ -100,71 +158,45 @@ const ObjectDetection = () => {
     }
   }, [isWebcamStarted]);
 
-  const startWebcam = async () => {
-    try {
-      setIsWebcamStarted(true)
-      const constraints = {
-        video: {
-          facingMode: facingMode
-        }
-      };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play();
-        };
-        videoRef.current.onloadeddata = () => {
-          if (canvasRef.current) {
-            canvasRef.current.width = videoRef.current.videoWidth;
-            canvasRef.current.height = videoRef.current.videoHeight;
-            setIsPortrait(videoRef.current.videoHeight > videoRef.current.videoWidth);
-          }
-        };
-      }
-    } catch (error) {
-      setIsWebcamStarted(false)
-      console.error('Error accessing webcam:', error);
-    }
-  };
-
-  const switchCamera = () => {
-    setFacingMode(prevMode => prevMode === 'user' ? 'environment' : 'user');
-    if (isWebcamStarted) {
-      stopWebcam();
-      setTimeout(() => startWebcam(), 100);
-    }
+  const startWebcam = () => {
+    setIsWebcamStarted(true);
   };
 
   const stopWebcam = useCallback(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    if (video && video.srcObject) {
-      const stream = video.srcObject;
-      const tracks = stream.getTracks();
-
-      tracks.forEach((track) => {
-        track.stop();
-      });
-
-      video.srcObject = null;
-      setPredictions([]);
-    }
-
-    // Clear the canvas
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
     setIsWebcamStarted(false);
     if (detectionInterval) {
       clearInterval(detectionInterval);
       setDetectionInterval(null);
     }
   }, [detectionInterval]);
+
+  const switchCamera = () => {
+    setFacingMode(prevMode => prevMode === 'user' ? 'environment' : 'user');
+  };
+
+  const captureImage = useCallback(() => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    // Convert base64 to array buffer
+    const base64 = imageSrc.split(',')[1];
+    const binaryString = window.atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    runInference(bytes.buffer);
+  }, [webcamRef]);
+
+  useEffect(() => {
+    if (isWebcamStarted) {
+      setDetectionInterval(setInterval(captureImage, 500));
+    } else {
+      if (detectionInterval) {
+        clearInterval(detectionInterval);
+        setDetectionInterval(null);
+      }
+    }
+  }, [isWebcamStarted, captureImage]);
 
   const resetCounts = useCallback(() => {
     setObjectCounts({});
@@ -348,16 +380,25 @@ const ObjectDetection = () => {
         <CardContent>
           <div className="flex flex-col items-center space-y-4">
             <div className="relative w-full max-w-2xl">
-              <video
-                ref={videoRef}
-                className="absolute top-0 left-0 w-full h-full"
-                autoPlay
-                muted
-                playsInline
-              />
+              {isWebcamStarted ? (
+                <Webcam
+                  ref={webcamRef}
+                  audio={false}
+                  screenshotFormat="image/jpeg"
+                  videoConstraints={{
+                    facingMode: facingMode
+                  }}
+                  className="w-full h-full"
+                />
+              ) : (
+                <div {...getRootProps()} className="w-full h-64 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                  <input {...getInputProps()} />
+                  <p>Drag 'n' drop an image here, or click to select a file</p>
+                </div>
+              )}
               <canvas
                 ref={canvasRef}
-                className="w-full h-full"
+                className="absolute top-0 left-0 w-full h-full"
                 onClick={handleCanvasClick}
               />
             </div>
@@ -383,6 +424,9 @@ const ObjectDetection = () => {
               </Button>
               <Button onClick={switchCamera}>
                 <CameraIcon className="mr-2 h-4 w-4" /> Switch Camera
+              </Button>
+              <Button onClick={() => document.querySelector('input[type="file"]').click()}>
+                <Upload className="mr-2 h-4 w-4" /> Upload Image
               </Button>
             </div>
             <div className="w-full max-w-2xl">
