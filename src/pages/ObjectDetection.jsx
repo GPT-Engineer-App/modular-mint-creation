@@ -69,10 +69,8 @@ const ObjectDetection = () => {
 
       video.srcObject = null;
       setPredictions([]);
-      setIsWebcamStarted(false);
-    } else {
-      setIsWebcamStarted(false);
     }
+    setIsWebcamStarted(false);
   };
 
   const predictObject = async () => {

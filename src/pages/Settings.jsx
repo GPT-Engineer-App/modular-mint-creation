@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import axios from 'axios';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const api = axios.create({
   baseURL: 'https://cors-anywhere.herokuapp.com/https://backengine-nqhbcnzf.fly.dev/api',
@@ -16,6 +17,7 @@ const Settings = () => {
     alertThreshold: '',
     detectionSensitivity: '',
   });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -24,6 +26,7 @@ const Settings = () => {
         setSettings(response.data);
       } catch (error) {
         console.error('Error fetching settings:', error);
+        setError('Failed to fetch settings. Please try again later.');
       }
     };
 
@@ -50,12 +53,18 @@ const Settings = () => {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Settings</h1>
 
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>System Configuration</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {!error && (
+            <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="alertThreshold" className="block text-sm font-medium text-gray-700">
                 Alert Threshold
