@@ -9,6 +9,7 @@ const VAD = () => {
   const [voiceDetected, setVoiceDetected] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [detectedCommand, setDetectedCommand] = useState('');
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const canvasRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -16,6 +17,7 @@ const VAD = () => {
   const sourceRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -45,9 +47,11 @@ const VAD = () => {
 
       mediaRecorderRef.current.start();
       setIsListening(true);
+      setError(null);
       detectVoiceActivity();
     } catch (error) {
       console.error('Error accessing microphone:', error);
+      setError('Failed to access microphone. Please check your permissions and try again.');
     }
   };
 
@@ -57,6 +61,9 @@ const VAD = () => {
       setIsListening(false);
       cancelAnimationFrame(animationFrameRef.current);
       sourceRef.current.disconnect();
+    }
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
     }
   };
 
@@ -83,7 +90,12 @@ const VAD = () => {
   };
 
   const recognizeCommand = () => {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+    }
+
+    recognitionRef.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    const recognition = recognitionRef.current;
     recognition.lang = 'en-US';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
@@ -104,14 +116,18 @@ const VAD = () => {
     recognition.onerror = (event) => {
       console.error('Speech recognition error', event.error);
       if (event.error === 'aborted') {
-        console.log('Speech recognition was aborted. Retrying...');
-        setTimeout(recognizeCommand, 1000); // Retry after 1 second
+        setError('Speech recognition was aborted. Please try again.');
+      } else {
+        setError(`Speech recognition error: ${event.error}`);
       }
+      setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
     };
 
     recognition.onend = () => {
       console.log('Speech recognition ended. Restarting...');
-      recognition.start();
+      if (isListening) {
+        recognition.start();
+      }
     };
   };
 
@@ -188,6 +204,11 @@ const VAD = () => {
               <AlertDescription>
                 Detected command: {detectedCommand}
               </AlertDescription>
+            </Alert>
+          )}
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
         </CardContent>
