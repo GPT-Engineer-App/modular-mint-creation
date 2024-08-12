@@ -47,6 +47,21 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const signup = useCallback(async (email, password) => {
+    try {
+      const response = await api.post('/api/collections/users/records', { email, password });
+      if (response.data.id) {
+        // After successful signup, log the user in
+        await login(email, password);
+      } else {
+        throw new Error('Signup failed');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    }
+  }, [login]);
+
   const logout = useCallback(() => {
     localStorage.removeItem('authToken');
     setIsAuthenticated(false);
@@ -57,8 +72,9 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     user,
     login,
+    signup,
     logout
-  }), [isAuthenticated, user, login, logout]);
+  }), [isAuthenticated, user, login, signup, logout]);
 
   return (
     <AuthContext.Provider value={value}>
