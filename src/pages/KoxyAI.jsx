@@ -5,41 +5,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'https://api.enginelabs.ai/v1',
-  headers: {
-    'Authorization': 'Bearer YOUR_ACTUAL_ENGINE_LABS_API_KEY',
-    'Content-Type': 'application/json'
+// Temporary workaround: Disable Engine Labs AI functionality
+const mockApi = {
+  post: (endpoint, data) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ data: { response: "This is a mock response. Engine Labs AI is currently disabled." } });
+      }, 1000);
+    });
   }
-});
-
-// Add a response interceptor
-api.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error("Server responded with error:", error.response.status, error.response.data);
-      if (error.response.status === 429) {
-        // Implement exponential backoff here
-        // For simplicity, we'll just wait for 5 seconds before retrying
-        return new Promise(resolve => {
-          setTimeout(() => resolve(api(error.config)), 5000);
-        });
-      }
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error("No response received:", error.request);
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error("Error setting up request:", error.message);
-    }
-    return Promise.reject(error);
-  }
-);
+};
 
 const KoxyAI = () => {
   const [chatInput, setChatInput] = useState('');
@@ -56,15 +31,11 @@ const KoxyAI = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.post('/chat', { message: chatInput });
+      const response = await mockApi.post('/chat', { message: chatInput });
       setChatResponse(response.data.response);
     } catch (error) {
       console.error('Error:', error);
-      if (error.response && error.response.status === 502) {
-        setError('The server is currently unavailable. Please try again later.');
-      } else {
-        setError('An error occurred while processing your chat request.');
-      }
+      setError('An error occurred while processing your chat request.');
     } finally {
       setIsLoading(false);
     }

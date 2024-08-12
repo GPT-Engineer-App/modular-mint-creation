@@ -4,16 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { useLocation } from 'react-router-dom';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const ObjectDetection = () => {
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
   const [predictions, setPredictions] = useState([]);
   const [detectionInterval, setDetectionInterval] = useState();
   const [objectCounts, setObjectCounts] = useState({});
+  const [historicalData, setHistoricalData] = useState([]);
   const location = useLocation();
   const videoRef = useRef(null);
   const modelRef = useRef(null);
   const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const savedCounts = JSON.parse(sessionStorage.getItem('objectCounts')) || {};
+    setObjectCounts(savedCounts);
+    const savedHistoricalData = JSON.parse(localStorage.getItem('historicalData')) || [];
+    setHistoricalData(savedHistoricalData);
+  }, []);
 
   useEffect(() => {
     const loadModel = async () => {
@@ -128,7 +137,24 @@ const ObjectDetection = () => {
         counts[prediction.class] = (counts[prediction.class] || 0) + 1;
       });
 
-      setObjectCounts(counts);
+      setObjectCounts(prevCounts => {
+        const newCounts = { ...prevCounts };
+        Object.entries(counts).forEach(([key, value]) => {
+          newCounts[key] = (newCounts[key] || 0) + value;
+        });
+        sessionStorage.setItem('objectCounts', JSON.stringify(newCounts));
+        return newCounts;
+      });
+
+      // Update historical data every minute
+      const now = new Date();
+      if (now.getSeconds() === 0) {
+        setHistoricalData(prevData => {
+          const newData = [...prevData, { timestamp: now.toISOString(), ...counts }];
+          localStorage.setItem('historicalData', JSON.stringify(newData.slice(-60))); // Keep last 60 data points
+          return newData.slice(-60);
+        });
+      }
     } catch (err) {
       console.error(err);
     }
@@ -164,7 +190,7 @@ const ObjectDetection = () => {
           </div>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="mb-4">
         <CardHeader>
           <CardTitle>Object Counts</CardTitle>
         </CardHeader>
@@ -176,6 +202,30 @@ const ObjectDetection = () => {
               </li>
             ))}
           </ul>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Historical Data</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={historicalData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="timestamp" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              {Object.keys(objectCounts).map((objectClass, index) => (
+                <Line 
+                  key={objectClass}
+                  type="monotone"
+                  dataKey={objectClass}
+                  stroke={`hsl(${index * 30}, 70%, 50%)`}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>
